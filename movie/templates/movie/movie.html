@@ -1,0 +1,30 @@
+{% extends 'movie/base.html' %}
+{% load static %}
+{% load mytags %}
+
+{% block title %}
+
+{% endblock %}
+
+{% block content %}
+
+<style>
+    th{
+        max-width: 100px;
+        text-align: center;
+    }
+    td{
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100px;
+    }
+</style>
+
+    <h2>{{ table_type }}</h2>
+    {% include "movie/inc_tablemovies.html" %}
+
+    {% include "movie/inc_pagination.html" %}
+
+
+{% endblock %}

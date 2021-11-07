@@ -1,0 +1,6 @@
+Django==3.0.8
+django-glrm==1.1.3
+tmdbv3api==1.7.6
+requests==2.23.0
+upnpclient==1.0.3
+pywin32==227

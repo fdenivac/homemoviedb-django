@@ -1,0 +1,49 @@
+{
+
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "runserver",
+            "type": "python",
+            "request": "launch",
+            "program": "manage.py",
+            "args": ["runserver"],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "manage",
+            "type": "python",
+            "request": "launch",
+            "program": "manage.py",
+            // "args": ["movieparsing",  "-v 1",  "\\\\DiskStation\\video\\Movies", "--simu", "--force-parsing", "--exact-name"  ],
+            "args": ["movieparsing",  "-v 1",  "--silent-exists", "G:\\Movies", "--simu" ],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+
+        {
+            "name": "dlna",
+            "type": "python",
+            "request": "launch",
+            "program": "manage.py",
+            "args": ["dlna_infos",  "-v 3",  "--smart_discover" ],
+            // "args": ["dlna_infos",  "--contents=http://192.168.1.3:50001/desc/device.xml;Video/Movies" ],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+
+        {
+            "name": "append_remote",
+            "type": "python",
+            "request": "launch",
+            "program": "manage_moviesite.py",
+            "args": [ "--address=http://localhost:8000",  "--user=john", "--password", "--silent-exists", "--exact-name", "\\\\DiskStation\\video\\Films\\Arte", ],
+            // "args": [ "--address=http://localhost:8000", "--user=john", "--password", "--exact-name", "G:\\Films\\Armored.avi", "--force-parsing", "--idtmdb=339513"  ],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+
+
+    ]
+}

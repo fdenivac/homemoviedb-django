@@ -1,0 +1,33 @@
+{% load mytags %}
+    {% comment %} Movies table include file {% endcomment %}
+    <table class="table table-hover table-sm">
+        <thead class="thead-dark" data-file-width="5px">
+            <tr>
+                {% if show_poster %}<th scope="col" width="70px">Poster</th> {% endif %}
+                <th scope="col">Title</th>
+                <th scope="col" width="4em">Year</th>
+                <th scope="col">Synopsys</th> 
+                <th scope="col">File</th>
+                <th scope="col" width="10em">Duration</th>
+                <th scope="col" width="10em">Image</th>
+                <th scope="col" width="8em">Size</th>
+            </tr>
+        </thead>
+        {% for movie in movies %}
+        <tr>
+            {% if show_poster %} <td> <img src="{{ movie.poster.all.0.poster.url }}" height="70px"> </td> {% endif %}
+            <td> <a href="https://www.themoviedb.org/movie/{{ movie.id_tmdb }}?language=fr">{{ movie.title }}</a> </td>
+            <td> {{ movie.release_year }}</td>
+            <td style="word-wrap: break-word; white-space: normal"> {{ movie.overview }} </td>
+            <td> <a href="{% url 'movie_details' movie.id %}">{{ movie.file }}</a></td>
+            <td align="center"> {{ movie.duration|sectoduration }}</td>
+            <td> {{ movie.screen_size }}</td>
+            <td> {{ movie.file_size|smartsize }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+
+
+
+

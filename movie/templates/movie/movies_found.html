@@ -1,0 +1,37 @@
+{% extends 'movie/base.html' %}
+{% load static %}
+{% load mytags %}
+
+{% block title %}
+
+{% endblock %}
+
+{% block content %}
+
+<style>
+    body {
+        min-width:1200px;
+        width: auto;            /* Firefox will set width as auto */
+        width:1200px;           /* As IE ignores !important it will set width as 1000px; */
+    }
+    th{
+        max-width: 100px;
+        text-align: center;
+    }
+    td{
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100px;
+    }
+    </style>
+
+
+    <h2>{{ table_type }}</h2>
+    {% include "movie/inc_tablemovies.html" %}
+    
+    {% include "movie/inc_pagination.html" %}
+    
+
+
+{% endblock %}

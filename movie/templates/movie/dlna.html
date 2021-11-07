@@ -1,0 +1,115 @@
+{% extends 'movie/base.html' %}
+{% load static %}
+{% load mytags %}
+
+{% block title %}
+DLNA Discover
+{% endblock %}
+
+{% block content %}
+<style>
+.select-editable {position:relative; background-color:white; border:solid grey 1px;  width:120px; height:18px;}
+.select-editable select {position:absolute; top:0px; left:0px; font-size:14px; border:none; width:120px; margin:0;}
+.select-editable input {position:absolute; top:0px; left:0px; width:100px; padding:1px; font-size:12px; border:none;}
+.select-editable select:focus, .select-editable input:focus {outline:none;}
+</style>
+
+<script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
+<script type="text/javascript">
+$(document).ready(function() {
+
+    //  submit discover
+    $('#discover').submit(function(e) {
+        e.preventDefault();
+        $.ajax({
+            type: 'POST',
+            url: "{% url 'dlna_discover' %}",
+            data: data = getFormData($(this).serializeArray()), 
+            success: function(data) {
+                $('#result').html('<pre>\n' + data.result + '</pre>');
+             }
+        });
+        return false;   // important: prevent the form from submitting
+    });
+
+    //  submit browse
+    $('#browse').submit(function(e) {
+        e.preventDefault();
+        $.ajax({
+            type: 'POST',
+            url: "{% url 'dlna_browse' %}",
+            data: data = getFormData($(this).serializeArray()), 
+            success: function(data) {
+                $('#result').html('\n' + data.result);
+             }
+        });
+        return false;   // important: prevent the form from submitting
+    });
+
+});
+
+function getFormData(data) {
+   var unindexed_array = data;
+   var indexed_array = {};
+
+   $.map(unindexed_array, function(n, i) {
+    indexed_array[n['name']] = n['value'];
+   });
+
+   return indexed_array;
+}
+
+</script>
+
+
+<h2 class="center">DLNA Tools</h2>
+<p>
+<h4>Discover DLNA devices in network environment :</h4>
+<form class="form-inline my-2 my-lg-0" method="GET" action="{% url 'searchmovies' %}" id="discover">
+    <label>Device to search &nbsp; </label>
+    <select class="form-control mr-sm-2"  name="devices" aria-label="vol">
+        <option value="all" selected>All devices</option>
+        <option value="smart">Pertinent devices</option>
+        <option value="renderers">Renderers (as TV)</option>
+        <option value="mediaservers">Media servers</option>
+    </select>
+    <label>Timeout &nbsp; </label>
+    <input class="form-control mr-sm-2" type="int" name="timeout" value="2" placeholder="Nom ...">
+    <label>Verbosity &nbsp; </label>
+    <select class="form-control mr-sm-2"  name="verbosity" value="0">
+        <option value="0" selected>0</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+    </select>
+    <input name="csrfmiddlewaretoken" type="hidden" value="{{ csrf_token }}">
+    <button class="btn btn-outline-secondary my-2 my-sm-0" type="submit" style = "background-color: #d8ebfc; border:none">Discover</button>
+</form>
+<br>
+<h4>Medias browse :</h4>
+<form class="form-inline my-2 my-lg-0" method="GET" action="{% url 'dlna_browse' %}" id="browse">
+    <label>Media  (name or location) &nbsp; </label>
+    <select class="form-control mr-sm-2"  name="mediaserver">
+        {% for ms in mediaservers %}
+        <option value="{{ ms }}">{{ ms }}</option>
+        {% endfor %}
+    </select>
+
+    <label>Directory &nbsp; </label>
+    <input class="form-control mr-sm-2" name="directory" value="" placeholder="Directory ...">
+
+    <label>SubDirs &nbsp;</label>
+    <input class="form-check-input" type="checkbox" name="subdirs">
+
+    <input name="csrfmiddlewaretoken" type="hidden" value="{{ csrf_token }}">
+
+    <button class="btn btn-outline-secondary my-2 my-sm-0" type="submit" style = "background-color: #d8ebfc; border:none">Browse</button>
+</form>
+
+
+</p>
+
+<div id="result">
+</div>
+
+{% endblock %}

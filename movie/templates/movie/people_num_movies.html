@@ -1,0 +1,39 @@
+{% extends 'movie/base.html' %}
+{% load static %}
+{% load mytags %}
+
+{% block title %}
+
+{% endblock %}
+
+{% block content %}
+<head>
+<style>
+    .table {
+        margin: auto;
+        width: 50%; 
+    }
+</style>
+
+</head>
+    <h2>{{ table_type }}</h2>
+    <table class="table table-striped">
+        <thead class="thead-dark">
+            <tr>
+                <th scope"col">{{ jobcriter }}</th>
+                <th scope="col" class="col-1">Movies number</th>
+                {% if show_job %}<th scope="col" class="col-4">Job</th>{% endif %}
+            </tr>
+        </thead>
+        {% for person in people %}
+        <tr>
+            <td><a href="{% url 'movies_jobperson' '' person.name %}"> {{ person.name }}</a> </td>
+            <td class="text-center"> {{ person.total }} </td>
+            {% if show_job %}<td> {{ person.job }} </td>{% endif %}
+
+        </tr>
+        {% endfor %}
+    </table>
+
+
+{% endblock %}

@@ -1,0 +1,75 @@
+{% extends 'movie/base.html' %}
+{% load static %}
+{% load mytags %}
+
+{% block title %}{% endblock %}
+
+
+
+{% block content %}
+<script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
+<script type="text/javascript">
+
+
+$(document).ready(function() {
+
+    // get movies for first genre in listbox
+    genre = $('#dropgenres').find("option:first-child").val();
+    movies4genre(genre);
+    $('#dropgenres').val(genre);
+
+
+    // get html movies for a genre
+    function movies4genre(genre) {
+        console.log("movies4genre", genre);
+        $.ajax({
+            type: 'POST',
+            url: "{% url 'ajax_noviewed_genre' %}",
+            data: {
+              'genre': genre,
+              csrfmiddlewaretoken: '{{ csrf_token }}'
+            },
+            dataType: 'json',
+            success: function(data) { // on success..
+              $('#movies').html(data.html);
+            },
+        });
+    };
+
+
+    // handle change selection in select control
+    $('#dropgenres').change(function() {
+        genre = $('#dropgenres').val()
+        movies4genre(genre)
+        return false;
+    });
+
+});
+</script>
+
+<style>
+    th{
+        max-width: 100px;
+        text-align: center;
+    }
+    td{
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100px;
+    }
+</style>
+
+
+    <h2>{{ table_type }}</h2>
+    <div>
+
+    <select id="dropgenres" class="form-control form-select-sm" size="12" style="max-width: 300px; display: block; margin:0 auto;">  
+    {% for genrecount in genres %}
+        <option value="{{ genrecount.0 }}"> {{ genrecount.1 }} <i>movies for</i> "<b>{{ genrecount.0 }}</b>" </option>  
+    {% endfor %}
+    </select>
+
+    <div id="movies"></div>
+
+{% endblock %}

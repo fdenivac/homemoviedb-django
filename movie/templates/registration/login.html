@@ -1,0 +1,47 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+body {
+  background-color: #f1f1f1;
+  padding: 20px;
+  font-family: Arial;
+}
+h1 {
+  font-size: 24px;
+  text-align:center;
+  margin-bottom: 50px;
+}
+div {
+  line-height:20px;
+  font-size: 18px;
+}
+#loginform {
+  margin-top: 20px;
+  padding: 10px;
+}
+label {
+  display: inline-block;
+  margin-left: 20px;
+  width: 150px;
+}
+  </style>
+
+</head>
+
+<h1>Home Movies Catalog</h1>
+<div>
+This private site need authentification :
+</div>
+
+<div id="loginform">
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Validation</button>
+</form>
+</div>
+
+</body>
+</html>

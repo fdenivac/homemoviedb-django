@@ -1,0 +1,29 @@
+{% load static %}
+{% load mytags %}
+    <table class="table table-striped table-sm w-75">
+        <thead class="thead-light" data-file-width="5px">
+            <tr>
+                <th scope="col" class="col-1 text-center">DLNA Path</th>
+                <th scope="col" class="col-2 text-center">DLNA Name</th>
+                <th scope="col" class="col-2 text-center">DLNA URI</th>
+            </tr>
+        </thead>
+        {% for rootdir, dirs, components in contents %}
+            {% for name, uri in components %}
+                <tr>
+                    <td>{{ rootdir }}</td>
+                    <td>{{ name }}</td>
+                    <td>{{ uri }} </td>
+                </tr>
+            {% endfor %}
+            {% for dir in dirs %}
+              <tr>
+                <td>{{ rootdir }}/{{ dir }}</td>
+                <td></td>
+                <td></td>
+              </tr>
+            {% endfor %}
+        {% endfor %}
+
+
+    </table>

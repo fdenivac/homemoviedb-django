@@ -1,0 +1,107 @@
+{% extends 'movie/base.html' %}
+{% load static %}
+{% load mytags %}
+
+{% block title %}
+
+{% endblock %}
+
+
+{% block content %}
+
+<style>
+.navicon:hover {
+    transform: scale(1.5);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+</style>
+<script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
+<script type="text/javascript">
+$(document).ready(function() {
+
+    //  click on play
+    $('#playmovie').click(function() {
+        $.ajax({
+            type: 'POST',
+            url: "{% url 'movie_play' %}",
+            data: {id:'{{ movie.id }}', csrfmiddlewaretoken: '{{ csrf_token }}',}, 
+            success: function(data) {
+                console.log("code", data.code, data.reason);
+                if (data.code != 0) {
+                    alert("ERROR: " + data.reason);
+                }
+                else {
+                    $('#result').html('Playing');
+                }
+            }
+        });
+    });
+
+
+
+});
+</script>
+
+
+
+    <h2> {{ movie.title }}{% if user.is_superuser %} &nbsp;&nbsp;(db:{{ movie.id }}, tmdb:{{ movie.id_tmdb }}){% endif %}
+    {% if playable %}
+      &nbsp;&nbsp; <img id="playmovie" class="navicon" src="{% static 'playmovie.png' %}" width="40px" height="40px"/>&nbsp;<span id="result"></span>
+    {% endif %}
+    </h2>
+
+    <table class="table table-sm  table-dark">
+      <tr>
+        {% for poster in movie.poster.all %}
+        <td class="col-md-2"> <img src="{{ poster.poster.url }}" height="300px">
+        {% if user.is_superuser %}
+        <form method="GET" action="{% url 'removeposter' %}"><input type="text" name="idposter" value="{{ poster.id }}" hidden /><button type="submit" style="background-color: #d8ebfc; border:none">Remove</button></form> </td>
+        {% endif %}
+        {% endfor %}
+     </tr>
+    </table>
+
+    <table class="table table-sm  table-dark">
+      <tr> <td> Original Title </td> <td> {{ movie.original_title }} </td> </tr>
+      <tr> <td> Release Year</td> <td> {{ movie.release_year }} </td> </tr>
+      <tr> <td> Director</td> <td> {{ movie|director }} </td> </tr>
+      <tr> <td> Genres</td> <td> {{ movie.genres }} </td> </tr>
+      <tr> <td> Synopsys </td> <td style="word-wrap: break-word; white-space: normal"> {{ movie.overview }} </td> </tr>
+      <tr> <td> File </td> <td> {{ movie.file }} </td> </tr>
+      <tr> <td> File Size </td> <td> {{ movie.file_size|smartsize }} </td> </tr>
+      <tr> <td> File Status </td> <td> {{ movie.file_status }} </td> </tr>
+      <tr> <td> Video Format</td> <td> {{ movie.movie_format }} </td> </tr>
+      <tr> <td> Video Size</td> <td> {{ movie.screen_size }} </td> </tr>
+      <form method="GET" action="{% url 'setdetails' %}">
+      <tr> <td><input type="text" name="idmovie" hidden value="{{ movie.id }}" /><label for="views">Num views : &nbsp;</label></td><td><input type="text" name="viewed" id="views" value="{{ movie.viewed }}" /></td></tr>
+      <tr> <td><label for="rate">Rate: &nbsp;</label></td><td><input type="text" name="rate" id="rate" value="{{ movie.rate }}" /></td></tr>
+      <tr> <td><button type="submit" style="background-color: #d8ebfc; border:none">Modify</button></td></tr>
+      </tr></form>
+    </table>
+
+
+
+    <h3>Crédits</h3>
+    <div class="row justify-content-center">
+    <div class="col-auto" style="width:50%">
+
+    <table class="table table-sm table-dark" >
+        <thead class="thead-light" >
+            <tr>
+                <th class="col-md-3">Job</th>
+                <th >Nom</th>
+                <th >Personnage</th>
+            </tr>
+        </thead>
+        {% for person in movie.team.all %}
+        <tr>
+            <td> {{ person.job }} </td>
+            <td> <a href="{% url 'movies_jobperson' '' person.name %}"> {{ person.name }}</a> </td>
+            <td> {% if person.extension %} {{ person.extension }}  {% endif %} </td>
+        </tr>
+        {% endfor %}
+    </table>
+    </div>
+    </div>
+
+{% endblock %}
