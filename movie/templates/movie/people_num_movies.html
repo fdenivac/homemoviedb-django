@@ -2,9 +2,7 @@
 {% load static %}
 {% load mytags %}
 
-{% block title %}
-
-{% endblock %}
+{% block title %} - People{% endblock %}
 
 {% block content %}
 <head>
@@ -17,12 +15,12 @@
 
 </head>
     <h2>{{ table_type }}</h2>
-    <table class="table table-striped">
+    <table class="table table-striped table-sm w-75" data-toggle="table" data-sortable="true">
         <thead class="thead-dark">
             <tr>
-                <th scope"col">{{ jobcriter }}</th>
-                <th scope="col" class="col-1">Movies number</th>
-                {% if show_job %}<th scope="col" class="col-4">Job</th>{% endif %}
+                <th data-field="jobcriter" data-sortable="true">{{ jobcriter }}</th>
+                <th data-field="num" class="col-1" data-sortable="true">Movies number</th>
+                {% if show_job %}<th data-field="job" class="col-4" data-sortable="true">Job</th>{% endif %}
             </tr>
         </thead>
         {% for person in people %}

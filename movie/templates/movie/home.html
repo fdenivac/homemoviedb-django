@@ -2,9 +2,7 @@
 {% load static %}
 {% load mytags %}
 
-{% block title %}
-
-{% endblock %}
+{% block title %} - Index{% endblock %}
 
 {% block content %}
 <head>
@@ -14,36 +12,41 @@
 
 <h3>Quick Access</h3>
 <br>
-Movies never viewed on "Synology" ordered by <a href="{% url 'noviewed' 'Diskstation' 'title' %}">Title</a>, <a href="{% url 'noviewed' 'Diskstation' '-release_year' %}">Year</a>><br>
-Movies never viewed by genre on "Synology" ordered by <a href="{% url 'noviewedgenres' 'Diskstation' 'title' %}">Title</a>, <a href="{% url 'noviewedgenres' 'Diskstation' '-release_year' %}">Year</a><br>
-Movies available on "Synology" ordered by <a href="{% url 'searchbypath' 'Diskstation' '' 'title' %}">Title</a>, <a href="{% url 'searchbypath' 'Diskstation' '' '-release_year' %}">Year</a>, <a href="{% url 'searchbypath' 'Diskstation' '' '-rate' %}">Rate</a><br>
-Movies stored on disk "Expansion" ordered by <a href="{% url 'searchbypath' 'Expansion' '' 'title' %}">Title</a>, <a href="{% url 'searchbypath' 'Expansion' '' '-release_year' %}">Year</a>, <a href="{% url 'searchbypath' 'Expansion' '' '-rate' %}">Rate</a><br>
-Movies already viewed on "Synology" ordered by <a href="{% url 'viewed' 'Diskstation' 'title' %}">Title</a>, <a href="{% url 'viewed' 'Diskstation' '-release_year' %}">Year</a>, <a href="{% url 'viewed' 'Diskstation' '-rate' %}">Rate</a><br>
-All Movies ordered by <a href="{% url 'searchbypath' '' '' 'title' %}">Title</a>, <a href="{% url 'searchbypath' '' '' '-release_year' %}">Year</a>, <a href="{% url 'searchbypath' '' '' '-rate' %}">Rate</a><br>
-Top pages : <a href="{% url 'persons_most_credited' 'Actor' %}">Top {{ top }} of Actors</a>, 
+Movies never <b>viewed</b> on "Synology" ordered by <a href="{% url 'noviewed' 'Diskstation' 'title' %}">Title</a>, <a href="{% url 'noviewed' 'Diskstation' '-release_year' %}">Year</a><br>
+Movies never <b>viewed</b> by <b>genre</b> on "Synology" ordered by <a href="{% url 'noviewedgenres' 'Diskstation' 'title' %}">Title</a>, <a href="{% url 'noviewedgenres' 'Diskstation' '-release_year' %}">Year</a><br>
+Movies <b>available</b> on "Synology" ordered by <a href="{% url 'searchbypath' 'Diskstation' '' 'title' %}">Title</a>, <a href="{% url 'searchbypath' 'Diskstation' '' '-release_year' %}">Year</a><br>
+Movies <b>stored</b> on disk "Expansion" ordered by <a href="{% url 'searchbypath' 'Expansion' '' 'title' %}">Title</a>, <a href="{% url 'searchbypath' 'Expansion' '' '-release_year' %}">Year</a><br>
+Movies <b>already viewed</b> on "Synology" ordered by <a href="{% url 'viewed' 'Diskstation' 'title' %}">Title</a>, <a href="{% url 'viewed' 'Diskstation' '-release_year' %}">Year</a>, <a href="{% url 'viewed' 'Diskstation' '-rate' %}">Rate</a><br>
+<b>All</b> Movies ordered by <a href="{% url 'searchbypath' '' '' 'title' %}">Title</a>, <a href="{% url 'searchbypath' '' '' '-release_year' %}">Year</a>, <a href="{% url 'searchbypath' '' '' '-rate' %}">Rate</a><br>
+<b>Top</b> pages : <a href="{% url 'persons_most_credited' 'Actor' %}">Top {{ top }} of Actors</a>, 
 <a href="{% url 'persons_most_credited' 'Director' %}">Top {{ top }} of Directors</a>,
 <a href="{% url 'persons_most_credited' 'Director of Photography' %}">Top {{ top }} of Directors of Photography</a>,
 <a href="{% url 'persons_most_credited' 'Writer' %}">Top {{ top }} of Movie Writers</a>,
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 <a href="{% url 'persons_most_credited' 'Novel' %}">Top {{ top }} of Novelists</a>,
 <a href="{% url 'persons_most_credited' 'Music' %}">Top {{ top }} of Composers</a>,
 <a href="{% url 'persons_most_credited' 'Musician' %}">Top {{ top }} of Musicians</a><br>
-Count of Movies by Genre ordered by <a href="{% url 'genres' 'title' %}">Title</a>, <a href="{% url 'genres' '-release_year' %}">Year</a>, <a href="{% url 'genres' '-rate' %}">Rate</a><br>
+Count of Movies by <b>genre</b> ordered by <a href="{% url 'genres' 'title' %}">Title</a>, <a href="{% url 'genres' '-release_year' %}">Year</a>, <a href="{% url 'genres' '-rate' %}">Rate</a><br>
 
 <form class="form-inline my-2 my-lg-0" method="GET" action="{% url 'searchmoviesbyjobperson' %}">
-    <label>Movies with one or more people in a job &nbsp; </label>
+    <label>Movies with&nbsp;<b>people</b>&nbsp;in a&nbsp;<b>job</b> &nbsp; </label>
     <input class="form-control mr-sm-2" type="text" name="name" value="" placeholder="Nom ..." aria-label="SearchVN">
     <input class="form-control mr-sm-2" type="text" name="job" value="" placeholder="Job ..." aria-label="SearchVJ">
     <button class="btn btn-outline-secondary my-2 my-sm-0" type="submit" style = "background-color: #d8ebfc; border:none">Search</button>
 </form>
 
 <form class="form-inline my-2 my-lg-0" method="GET" action="{% url 'searchpeople' %}">
-    <label>Search for people  &nbsp; </label>
+    <label>Search for&nbsp;<b>people</b> &nbsp; </label>
     <input class="form-control mr-sm-2" type="text" name="name" value="" placeholder="Nom ..." aria-label="SearchVN">
     <input class="form-control mr-sm-2" type="text" name="job" value="" placeholder="Job ..." aria-label="SearchVJ">
     <button class="btn btn-outline-secondary my-2 my-sm-0" type="submit" style = "background-color: #d8ebfc; border:none">Search</button>
 </form>
 
 <br>
+<a href="{% url 'advanced_search' %}">Advanced Search</a><br>
+<a href="{% url 'dlna_tools' %}">Some tools around DLNA</a><br>
+<a href="{% url 'options' %}">The settings</a> (video viewer and hidden fields)
+<br><br>
 For movies management :
 <ul>
 <li><a href="{% url 'duplicated' %}">Movies Duplicated</a></li>
@@ -51,14 +54,5 @@ For movies management :
 <li><a href="{% url 'noposter' %}">Movies without Poster</a></li>
 </ul>
 
-<form class="form-inline my-2 my-lg-0" method="GET" action="{% url 'set_renderer' %}">
-    <label>Set the TV or decoder to use for playing &nbsp;</label>
-    <select class="form-control mr-sm-2"  name="renderers" aria-label="vol">
-        {% for rend in renderers %}
-        <option value="{{ rend.0 }}" {% if rend.0 == renderer_uri %} selected {% endif %} >{{ rend.1 }}</option>
-        {% endfor %}
-    </select>
-    <button class="btn btn-outline-secondary my-2 my-sm-0" type="submit" style = "background-color: #d8ebfc; border:none">Set TV/Decoder</button>
-</form>
-<a href="{% url 'dlna_tools' %}">Some tools around DLNA</a>
 {% endblock %}
+

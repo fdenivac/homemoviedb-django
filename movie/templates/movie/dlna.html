@@ -2,9 +2,9 @@
 {% load static %}
 {% load mytags %}
 
-{% block title %}
-DLNA Discover
-{% endblock %}
+{% block title %} - DLNA Tools{% endblock %}
+
+
 
 {% block content %}
 <style>
@@ -14,12 +14,13 @@ DLNA Discover
 .select-editable select:focus, .select-editable input:focus {outline:none;}
 </style>
 
-<script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
+{% block script %}
 <script type="text/javascript">
 $(document).ready(function() {
 
     //  submit discover
     $('#discover').submit(function(e) {
+        $('#result').html('<p class="bg-info">Be patient ...</p>');
         e.preventDefault();
         $.ajax({
             type: 'POST',
@@ -34,10 +35,26 @@ $(document).ready(function() {
 
     //  submit browse
     $('#browse').submit(function(e) {
+        $('#result').html('<p class="bg-info">Be patient ...</p>');
         e.preventDefault();
         $.ajax({
             type: 'POST',
             url: "{% url 'dlna_browse' %}",
+            data: data = getFormData($(this).serializeArray()), 
+            success: function(data) {
+                $('#result').html('\n' + data.result);
+             }
+        });
+        return false;   // important: prevent the form from submitting
+    });
+
+    //  submit check
+    $('#check').submit(function(e) {
+        e.preventDefault();
+        $('#result').html('<p class="bg-info">Be patient ...</p>');
+        $.ajax({
+            type: 'POST',
+            url: "{% url 'dlna_check_medias' %}",
             data: data = getFormData($(this).serializeArray()), 
             success: function(data) {
                 $('#result').html('\n' + data.result);
@@ -60,12 +77,11 @@ function getFormData(data) {
 }
 
 </script>
-
-
+{% endblock %}
 <h2 class="center">DLNA Tools</h2>
 <p>
 <h4>Discover DLNA devices in network environment :</h4>
-<form class="form-inline my-2 my-lg-0" method="GET" action="{% url 'searchmovies' %}" id="discover">
+<form class="form-inline my-2 my-lg-0" method="GET"  id="discover">
     <label>Device to search &nbsp; </label>
     <select class="form-control mr-sm-2"  name="devices" aria-label="vol">
         <option value="all" selected>All devices</option>
@@ -86,9 +102,10 @@ function getFormData(data) {
     <button class="btn btn-outline-secondary my-2 my-sm-0" type="submit" style = "background-color: #d8ebfc; border:none">Discover</button>
 </form>
 <br>
+
 <h4>Medias browse :</h4>
-<form class="form-inline my-2 my-lg-0" method="GET" action="{% url 'dlna_browse' %}" id="browse">
-    <label>Media  (name or location) &nbsp; </label>
+<form class="form-inline my-2 my-lg-0" method="GET" id="browse">
+    <label>Medias Server &nbsp; </label>
     <select class="form-control mr-sm-2"  name="mediaserver">
         {% for ms in mediaservers %}
         <option value="{{ ms }}">{{ ms }}</option>
@@ -105,11 +122,28 @@ function getFormData(data) {
 
     <button class="btn btn-outline-secondary my-2 my-sm-0" type="submit" style = "background-color: #d8ebfc; border:none">Browse</button>
 </form>
+<br>
+
+<h4>Check DLNA medias accessibility :</h4>
+<form class="form-inline my-2 my-lg-0" method="GET" id="check">
+    <label>Volume Media Server &nbsp; </label>
+    <select class="form-control mr-sm-2"  name="mediaserver">
+        {% for ms in mediaservers %}
+        <option value="{{ ms }}">{{ ms }}</option>
+        {% endfor %}
+    </select>
+
+    <input name="csrfmiddlewaretoken" type="hidden" value="{{ csrf_token }}">
+    <button class="btn btn-outline-secondary my-2 my-sm-0" type="submit" style = "background-color: #d8ebfc; border:none">Check</button>
+</form>
 
 
 </p>
 
+<h4>Results</h4>
 <div id="result">
 </div>
 
 {% endblock %}
+
+

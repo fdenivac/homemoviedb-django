@@ -13,6 +13,7 @@ from django.db.models.functions import Lower
 from django.core.paginator import Paginator
 from django.template.loader import render_to_string
 from django.conf import settings
+from django.urls import reverse
 
 from .models import Movie, Team, Poster
 
@@ -23,6 +24,7 @@ def get_volume_alias(label):
         if label.lower() == vol_label.lower():
             return vol_alias
     return None
+
 
 
 def set_order(order):
@@ -57,13 +59,14 @@ def home(request):
     return render(request, "movie/home.html", context)
 
 
+
 def all_movies(request):
     ''' show all movies'''
     movies = Movie.objects.all().order_by('title')
     paginator, movies, page = paginate(request, movies)
     context = {
         'table_type':'The {2} Movies  (page {0} on {1})'.format(page, paginator.num_pages, paginator.count),
-        'show_poster': True,
+        'hidden_fields': request.session.get('hidden_fields', settings.HIDDEN_FIELDS),
         'movies': movies,
         'volumes': settings.VOLUMES,
     }
@@ -75,6 +78,7 @@ def missing(request):
     ''' movies missing on volumes '''
     movies = Movie.objects.filter(file_status='missing').order_by('title')
     return render(request, "movie/movie.html", {'table_type':'Movies not found', 'movies': movies, 'volumes': settings.VOLUMES, })
+
 
 
 def duplicated(request):
@@ -91,11 +95,12 @@ def duplicated(request):
     paginator, movies, page = paginate(request, movies)
     context = {
         'table_type':'{2} Duplicated Movies (page {0} on {1})'.format(page, paginator.num_pages, paginator.count),
-        'show_poster': True,
+        'hidden_fields': request.session.get('hidden_fields', settings.HIDDEN_FIELDS),
         'movies': movies,
         'volumes':settings.VOLUMES, 'volume': '', 'query' : '',
         }
     return render(request, "movie/movies_found.html", context)
+
 
 
 def without_poster(request):
@@ -104,7 +109,7 @@ def without_poster(request):
     paginator, movies, page = paginate(request, movies)
     context = {
         'table_type':'{2} Movies without Poster (page {0} on {1})'.format(page, paginator.num_pages, paginator.count),
-        'show_poster': True,
+        'hidden_fields': request.session.get('hidden_fields', settings.HIDDEN_FIELDS),
         'movies': movies,
         'volumes':settings.VOLUMES, 'volume': '', 'query' : '',
         }
@@ -121,7 +126,7 @@ def no_viewed(request, volume, order):
     onwhere = 'on "{}"'.format(vol_label) if vol_label else ''
     context = {
         'table_type':'{2} Movies not viewed {3} (page {0} on {1})'.format(page, paginator.num_pages, paginator.count, onwhere),
-        'show_poster': True,
+        'hidden_fields': request.session.get('hidden_fields', settings.HIDDEN_FIELDS),
         'movies': movies,
         'volumes':settings.VOLUMES, 'volume':volume, 'query':'', 'order':order[0]
         }
@@ -148,12 +153,11 @@ def no_viewed_genres(request, volume, order):
 
     context = {
         'table_type':'Movies not viewed by genre',
-        'show_poster': True,
+        'hidden_fields': request.session.get('hidden_fields', settings.HIDDEN_FIELDS),
         'genres':genres,
         'volumes':settings.VOLUMES, 'volume':volume, 'query':'', 'order':order[0],
         }
     return render(request, "movie/movies_genres.html", context)
-
 
 
 
@@ -169,7 +173,7 @@ def ajax_no_viewed_genre(request):
 
     context = {
         'table_type':'Genre "{0}"'.format(genre),
-        'show_poster': True,
+        'hidden_fields': request.session.get('hidden_fields', settings.HIDDEN_FIELDS),
         'movies': movies,
         'volumes':settings.VOLUMES, 'volume': volume, 'query' : '',
         }
@@ -181,6 +185,7 @@ def ajax_no_viewed_genre(request):
     return JsonResponse(data)
 
 
+
 def movies_viewed(request, volume, order):
     ''' movies already viewed '''
     order = set_order(order)
@@ -190,7 +195,7 @@ def movies_viewed(request, volume, order):
     onwhere = 'on "{}"'.format(vol_label) if vol_label else ''
     context = {
         'table_type':'{2} Movies already viewed {3} (page {0} on {1})'.format(page, paginator.num_pages, paginator.count, onwhere),
-        'show_poster': True,
+        'hidden_fields': request.session.get('hidden_fields', settings.HIDDEN_FIELDS),
         'movies': movies,
         'volumes':settings.VOLUMES, 'volume':volume, 'query':'', 'order':order[0],
         }
@@ -231,7 +236,7 @@ def movies_genre(request, genre, order):
     paginator, movies, page = paginate(request, movies)
     context = {
         'table_type':'{0} movies founded for genre "{3}" (page {1} on {2})'.format(total_movies, page, paginator.num_pages, genre),
-        'show_poster': True,
+        'hidden_fields': request.session.get('hidden_fields', settings.HIDDEN_FIELDS),
         'movies': movies,
         'volumes':settings.VOLUMES, 'volume':'', 'query':'', 'order':order[0],
         }
@@ -258,11 +263,12 @@ def searchbypath(request, volume, query, order):
     onquery = 'with "{}" in title '.format(query) if query else ''
     context = {
         'table_type':'{2} Movies found {4}{3} (page {0} on {1})'.format(page, paginator.num_pages, paginator.count, onwhere, onquery),
-        'show_poster': True,
+        'hidden_fields': request.session.get('hidden_fields', settings.HIDDEN_FIELDS),
         'movies': movies,
         'volumes': settings.VOLUMES, 'volume':volume, 'query':query, 'order':order[0]
         }
     return render(request, "movie/movies_found.html", context)
+
 
 
 def searchmovies(request):
@@ -286,21 +292,25 @@ def persons_most_credited(request, jobcriter):
     return render(request, "movie/people_num_movies.html", context)
 
 
+
 def num_people(request, job, name):
     ''' page for movies number by person '''
     if job:
+        jobcriter = job
         people = Team.objects.filter(job=job, name__contains=name).values('name', 'job').annotate(total=Count('id')).order_by('-total')
     else:
+        jobcriter = 'Name'
         people = Team.objects.filter(name__contains=name).values('name', 'job').annotate(total=Count('id')).order_by('-total')
     forjob = 'in job "{}"'.format(job) if job else ''
     context = {
-        'table_type':'{0} persons found for name "{1}" {2}'.format(len(people), name, forjob),
-        'jobcriter': job,
+        'table_type':'{0} persons found with name "{1}" {2}'.format(len(people), name, forjob),
+        'jobcriter': jobcriter,
         'people': people,
         'show_job': True,
         'volumes':settings.VOLUMES, 'volume': '', 'query' : '',
         }
     return render(request, "movie/people_num_movies.html", context)
+
 
 
 def movie_details(request, idmovie):
@@ -311,10 +321,12 @@ def movie_details(request, idmovie):
     context = {
         'movie': movie,
         'show_job': True,
-        'playable': settings.DLNA_MEDIASERVERS[volume][0] is not None,
+        'playable': True,    # always potentially playable with my specific protocol.bat (see https://github.com/stefansundin/vlc-protocol/)
+        # 'playable': settings.DLNA_MEDIASERVERS[volume.lower()][0] is not None,
         'volumes':settings.VOLUMES, 'volume': '', 'query' : '',
         }
     return render(request, "movie/movie_details.html", context)
+
 
 
 def movies_jobperson(request, job, person):
@@ -326,12 +338,13 @@ def movies_jobperson(request, job, person):
     paginator, movies, page = paginate(request, movies)
     forjob = 'in job "{}"'.format(job) if job else ''
     context = {
-        'table_type':'{2} Movies found for name "{3}" {4} (page {0} on {1})'.format(page, paginator.num_pages, paginator.count, person, forjob),
-        'show_poster': True,
+        'table_type':'{2} Movies found with name "{3}" {4} (page {0} on {1})'.format(page, paginator.num_pages, paginator.count, person, forjob),
+        'hidden_fields': request.session.get('hidden_fields', settings.HIDDEN_FIELDS),
         'movies': movies,
         'volumes':settings.VOLUMES, 'volume': '', 'query' : '',
         }
     return render(request, "movie/movies_found.html", context)
+
 
 
 def searchmoviesbyperson(request):
@@ -341,11 +354,13 @@ def searchmoviesbyperson(request):
     return movies_jobperson(request, job, name)
 
 
+
 def searchpeople(request):
     ''' Search for job and person '''
     job = request.GET.get('job')
     name = request.GET.get('name')
     return num_people(request, job, name)
+
 
 
 def change_movie(request):
@@ -358,6 +373,7 @@ def change_movie(request):
     movie.rate = rate
     movie.save()
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
 
 
 def remove_poster(request):
@@ -373,11 +389,11 @@ def remove_poster(request):
 
 
 def set_renderer(request):
-    ''' form set renderer '''
+    ''' set renderer from form '''
     renderer = request.GET.get('renderers')
     request.session['default_renderer'] = renderer
-    print(request.session['default_renderer'])
-    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    # return to home rather than "request.META.get('HTTP_REFERER')"
+    return HttpResponseRedirect(reverse('home'))
 
 
 
@@ -388,3 +404,83 @@ def dlna_tools(request):
         'mediaservers': [vol[0] for vol in settings.VOLUMES if vol[3][0]],
     }
     return render(request, "movie/dlna.html", context)
+
+
+
+def options(request):
+    ''' user options '''
+    renderer_uri = request.session.get('default_renderer', settings.DLNA_RENDERERS[0][0])
+    context = {
+        'volumes': settings.VOLUMES,
+        'renderers': settings.DLNA_RENDERERS,
+        'renderer_uri': renderer_uri,
+        'hidden_fields': request.session.get('hidden_fields', settings.HIDDEN_FIELDS),
+    }
+    return render(request, "movie/options.html", context)
+
+
+
+def set_hidden_fields(request):
+    ''' set hidden field from form '''
+    request.session['hidden_fields'] = list(request.GET.dict().keys())
+    # return to home rather than "request.META.get('HTTP_REFERER')"
+    return HttpResponseRedirect(reverse('home'))
+
+
+
+def advanced_search(request):
+    ''' advanced search '''
+    if request.method != 'POST':
+        context = {
+            'volumes': settings.VOLUMES,
+        }
+        if 'adv_search' in request.session:
+            # set previous query
+            for key in request.session['adv_search'].keys():
+                if key == 'csrfmiddlewaretoken':
+                    continue
+                context[key] = request.session['adv_search'][key]
+        return render(request, "movie/advsearch.html", context)
+
+    # build request
+    request.session['adv_search'] = request.POST
+    query = request.POST['query']
+    qvar = Q()
+    if 'title' in request.POST:
+        qvar |= Q(title__contains=query)
+    if 'title_orig' in request.POST:
+        qvar |= Q(original_title__contains=query)
+    if 'overview' in request.POST:
+        qvar |= Q(overview__contains=query)
+    if 'format' in request.POST:
+        qvar |= Q(movie_format__contains=query)
+    if 'file' in request.POST:
+        qvar |= Q(file__contains=query)
+    if 'people' in request.POST:
+        qvar |= Q(team__name__contains=query)
+    if 'character' in request.POST:
+        qvar |= Q(team__extension__contains=query)
+
+    order = set_order(request.POST['order'])
+    volume = request.POST['vol']
+    if volume in [None, '', settings.ALL_VOLUMES]:
+        if query:
+            movies = Movie.objects.filter(qvar & Q(file_status='OK')).distinct().order_by(*order)
+        else:
+            movies = Movie.objects.filter(file_status='OK').order_by(*order)
+    else:
+        if query:
+            movies = Movie.objects.filter(qvar & Q(file__istartswith=volume) & Q(file_status='OK')).distinct().order_by(*order)
+        else:
+            movies = Movie.objects.filter(file__istartswith=volume, file_status='OK').order_by(*order)
+    paginator, movies, page = paginate(request, movies)
+    vol_label = get_volume_alias(volume)
+    onwhere = 'on "{}"'.format(vol_label) if vol_label else ''
+    onquery = '"{}" '.format(query) if query else ''
+    context = {
+        'table_type':'{2} Movies found searching {4}{3} (page {0} on {1})'.format(page, paginator.num_pages, paginator.count, onwhere, onquery),
+        'hidden_fields': request.session.get('hidden_fields', settings.HIDDEN_FIELDS),
+        'movies': movies,
+        'volumes': settings.VOLUMES, 'volume':volume, 'query':query, 'order':order[0]
+        }
+    return render(request, "movie/movies_found.html", context)

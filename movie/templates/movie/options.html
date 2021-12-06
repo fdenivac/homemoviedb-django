@@ -1,0 +1,89 @@
+{% extends 'movie/base.html' %}
+{% load static %}
+{% load mytags %}
+
+{% block title %} - Settings{% endblock %}
+
+{% block content %}
+
+<h3>Various Settings</h3>
+<br>
+
+<div id="renderer" class="container p-3 my-3 rounded" style="background-color: rgb(220, 230, 250);" >
+<div class="row">
+    <h4>TV or decoder to use for video playing</h4>
+</div>
+<form class="form-inline my-2 my-lg-0" method="GET" action="{% url 'set_renderer' %}">
+    <label>TV or decoder &nbsp;</label>
+    <select class="form-control mr-sm-2"  name="renderers" aria-label="vol">
+        {% for rend in renderers %}
+        <option value="{{ rend.0 }}" {% if rend.0 == renderer_uri %} selected {% endif %} >{{ rend.1 }}</option>
+        {% endfor %}
+    </select>
+    <button class="btn btn-outline-secondary my-2 my-sm-0" type="submit" style="background-color: #ccd; border:none">Set TV/Decoder</button>
+</form>
+</div>
+<br>
+
+<div id="hiddenfields" class="container p-3 my-3 rounded" style="background-color: rgb(220, 230, 250)" >
+<form method="GET" action="{% url 'set_hidden_fields' %}">
+<div class="row">
+    <h4>Hidden fields for movies list</h4>
+</div>
+<div class="row">
+  <div class="col">
+    <div class="form-check form-check-inline">
+    <input class="form-check-input" type="checkbox" id="cb1" name="poster" value="poster" {% if 'poster' in hidden_fields %}checked{% endif %}>
+    <label class="form-check-label" for="cb1">Poster</label>
+    </div>
+  </div>
+  <div class="col">
+    <div class="form-check form-check-inline">
+    <input class="form-check-input" type="checkbox" id="cb2" name="rate" value="rate" {% if 'rate' in hidden_fields %}checked{% endif %}>
+    <label class="form-check-label" for="cb2">Rate</label>
+    </div>
+  </div>
+  <div class="col">
+    <div class="form-check form-check-inline">
+    <input class="form-check-input" type="checkbox" id="cb3" name="file" value="file" {% if 'file' in hidden_fields %}checked{% endif %}>
+    <label class="form-check-label" for="cb3">File</label>
+    </div>
+  </div>
+</div>
+<div class="row">
+  <div class="col">
+    <div class="form-check form-check-inline">
+    <input class="form-check-input" type="checkbox" id="cb4" name="screen" value="screen" {% if 'screen' in hidden_fields %}checked{% endif %}>
+    <label class="form-check-label" for="cb4">Screen Size</label>
+    </div>
+  </div>
+  <div class="col">
+    <div class="form-check form-check-inline">
+    <input class="form-check-input" type="checkbox" id="cb5" name="size" value="size" {% if 'size' in hidden_fields %}checked{% endif %}>
+    <label class="form-check-label" for="cb5">File Size</label>
+    </div>
+  </div>
+  <div class="col">
+    <div class="form-check form-check-inline">
+    <input class="form-check-input" type="checkbox" id="cb6" name="format" value="format" {% if 'format' in hidden_fields %}checked{% endif %}>
+    <label class="form-check-label" for="cb6">Video Format</label>
+    </div>
+  </div>
+</div>
+
+
+<div class="row">
+    <div class="col">
+        <button class="btn btn-outline-secondary my-2 my-sm-0" type="submit" style="background-color: #ccd; border:none">Set Hidden Fields</button>
+    </div>
+</div>
+</form>
+</div>
+
+
+
+
+
+
+
+{% endblock %}

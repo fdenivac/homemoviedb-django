@@ -2,20 +2,11 @@
 {% load static %}
 {% load mytags %}
 
-{% block title %}
-
-{% endblock %}
+{% block title %} - Movie Details{% endblock %}
 
 
-{% block content %}
 
-<style>
-.navicon:hover {
-    transform: scale(1.5);
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-}
-</style>
-<script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
+{% block script %}
 <script type="text/javascript">
 $(document).ready(function() {
 
@@ -26,12 +17,19 @@ $(document).ready(function() {
             url: "{% url 'movie_play' %}",
             data: {id:'{{ movie.id }}', csrfmiddlewaretoken: '{{ csrf_token }}',}, 
             success: function(data) {
-                console.log("code", data.code, data.reason);
-                if (data.code != 0) {
-                    alert("ERROR: " + data.reason);
+                if (data.protocol == 'dlna') {
+                    $('#result').html('Playing');
+                }
+                else if (data.protocol == 'browser') {
+                    console.log("video in browser");
+                    $('#video').html(data.result);
+                }
+                else if (data.protocol == 'vlc') {
+                    console.log("video in VLC: ", data.result);
+                    window.location = data.result;
                 }
                 else {
-                    $('#result').html('Playing');
+                    alert("ERROR: " + data.result);
                 }
             }
         });
@@ -41,17 +39,37 @@ $(document).ready(function() {
 
 });
 </script>
+{% endblock %}
 
 
+{% block content %}
 
-    <h2> {{ movie.title }}{% if user.is_superuser %} &nbsp;&nbsp;(db:{{ movie.id }}, tmdb:{{ movie.id_tmdb }}){% endif %}
-    {% if playable %}
-      &nbsp;&nbsp; <img id="playmovie" class="navicon" src="{% static 'playmovie.png' %}" width="40px" height="40px"/>&nbsp;<span id="result"></span>
-    {% endif %}
-    </h2>
+<style>
+.navicon:hover {
+    transform: scale(1.5);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+video {
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+    margin-bottom: 2em;
+}
+</style>
+<div style="margin-top:8px;">
+    <div id="video"></div>
 
-    <table class="table table-sm  table-dark">
+    <table class="table">
+      <tr style="background-color:#d0e0ef;">
+        <td class="align-middle" style="width:90%; font-family:arial; font-size:30px;"> {{ movie.title }}</td>
+        <td >{% if playable %}<img id="playmovie" class="navicon" src="{% static 'playmovie.png' %}" width="40px" height="40px"/>&nbsp;<span id="result"></span>{% endif %}</td>
+        <td><a href="https://www.themoviedb.org/movie/{{ movie.id_tmdb }}?language=fr"><img id="tmdb" class="navicon" src="{% static 'tmdb.png' %}" width="40px" height="40px"/></a></td>
       <tr>
+    </table>
+
+    <table id="tableposters" class="table table-sm " data-sortable="false">  
+      <tr>
+        {% comment %} INFO: use xx.all for get queryset from foreign key related  {% endcomment %}
         {% for poster in movie.poster.all %}
         <td class="col-md-2"> <img src="{{ poster.poster.url }}" height="300px">
         {% if user.is_superuser %}
@@ -61,7 +79,7 @@ $(document).ready(function() {
      </tr>
     </table>
 
-    <table class="table table-sm  table-dark">
+    <table id="tabledetails" class="table table-sm table-bordered" data-sortable="false">
       <tr> <td> Original Title </td> <td> {{ movie.original_title }} </td> </tr>
       <tr> <td> Release Year</td> <td> {{ movie.release_year }} </td> </tr>
       <tr> <td> Director</td> <td> {{ movie|director }} </td> </tr>
@@ -73,8 +91,8 @@ $(document).ready(function() {
       <tr> <td> Video Format</td> <td> {{ movie.movie_format }} </td> </tr>
       <tr> <td> Video Size</td> <td> {{ movie.screen_size }} </td> </tr>
       <form method="GET" action="{% url 'setdetails' %}">
-      <tr> <td><input type="text" name="idmovie" hidden value="{{ movie.id }}" /><label for="views">Num views : &nbsp;</label></td><td><input type="text" name="viewed" id="views" value="{{ movie.viewed }}" /></td></tr>
-      <tr> <td><label for="rate">Rate: &nbsp;</label></td><td><input type="text" name="rate" id="rate" value="{{ movie.rate }}" /></td></tr>
+      <tr> <td><input type="text" name="idmovie" hidden value="{{ movie.id }}" /><label for="views">Num views&nbsp;</label></td><td><input type="text" name="viewed" id="views" value="{{ movie.viewed }}" /></td></tr>
+      <tr> <td><label for="rate">Rate&nbsp;</label></td><td><input type="text" name="rate" id="rate" value="{{ movie.rate }}" /></td></tr>
       <tr> <td><button type="submit" style="background-color: #d8ebfc; border:none">Modify</button></td></tr>
       </tr></form>
     </table>
@@ -82,17 +100,17 @@ $(document).ready(function() {
 
 
     <h3>Crédits</h3>
-    <div class="row justify-content-center">
-    <div class="col-auto" style="width:50%">
+    <div class="col-auto">
 
-    <table class="table table-sm table-dark" >
-        <thead class="thead-light" >
+    <table id="tablecredits" class="table table-sm table-striped" data-toggle="table" data-sortable="true">
+        <thead class="thead-dark" >
             <tr>
-                <th class="col-md-3">Job</th>
-                <th >Nom</th>
-                <th >Personnage</th>
+                <th data-field="job" data-sortable="true" data-width="20" data-width-unit="%">Job</th>
+                <th data-field="name" data-sortable="true" data-width="40" data-width-unit="%">Name</th>
+                <th data-field="char" data-sortable="true" data-width="40" data-width-unit="%">Character</th>
             </tr>
         </thead>
+        {% comment %} INFO: use xx.all for get queryset from foreign key related  {% endcomment %}
         {% for person in movie.team.all %}
         <tr>
             <td> {{ person.job }} </td>
@@ -102,6 +120,5 @@ $(document).ready(function() {
         {% endfor %}
     </table>
     </div>
-    </div>
-
+<div>
 {% endblock %}

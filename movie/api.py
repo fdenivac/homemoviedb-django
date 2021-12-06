@@ -201,39 +201,45 @@ def set_movie_status(request):
 
 
 
-#@staff_member_required
 def movie_play(request):
-    ''' play movie content (id database)
-        '''
+    '''
+    Play movie content (id database)
+        in:
+            id : id_movie
+        out:
+            protocol : 'dlna', 'browser', 'vlc', or '' on error
+            result : html if browser, vlc uri if vlc, or error description
+    '''
     try:
         movie_id = request.POST['id']
     except KeyError:
-        return JsonResponse({'code':-2, 'reason':'no json'})
+        return JsonResponse({'protocol': '', 'result': 'no json'})
 
     try:
         movie = Movie.objects.get(id=movie_id)
     except ObjectDoesNotExist:
-        return JsonResponse({'code':1, 'reason':'not found'})
+        return JsonResponse({'protocol': '', 'result':'not found'})
     volume, basename = ntpath.split(movie.file)
     volume = volume.split(':')[0]
     basename, _ = ntpath.splitext(basename)
 
-     # Get configured media server for volume
-    if not volume in settings.DLNA_MEDIASERVERS:
-        return JsonResponse({'code':1, 'reason':'volume not configured'})
-    dlna_uri, dlna_path = settings.DLNA_MEDIASERVERS[volume]
-    if not dlna_uri:
-        return JsonResponse({'code':1, 'reason':'no media server configured for volume'})
-    mediaserver = DLNA(device_uri=dlna_uri)
-    if not mediaserver.device:
-        return JsonResponse({'code':1, 'reason':'no media server'})
-
-
     # Get configured renderer
     renderer_uri = request.session.get('default_renderer', settings.DLNA_RENDERERS[0][0])
-    renderer = DLNA(device_uri=renderer_uri)
-    if not renderer.device:
-        return JsonResponse({'code':1, 'reason':'no renderer'})
+
+     # Get configured media server for volume
+    if not volume.lower() in settings.DLNA_MEDIASERVERS:
+        return JsonResponse({'protocol': '', 'result':'volume not configured'})
+    dlna_uri, dlna_path = settings.DLNA_MEDIASERVERS[volume.lower()]
+    if not dlna_uri:
+        if renderer_uri == 'vlc':
+            # the vlc-protocol.bat (see https://github.com/stefansundin/vlc-protocol/)
+            #  must be replaced by the local version
+            return JsonResponse({'protocol': 'vlc', 'result': 'vlc://' + movie.file})
+        else:
+            return JsonResponse({'protocol': '', 'result':'no media server configured for volume'})
+    mediaserver = DLNA(device_uri=dlna_uri)
+    if not mediaserver.device:
+        return JsonResponse({'protocol': '', 'result':'no media server'})
 
     # ROOT_ID path of media server
     root_id = mediaserver.root_content_id()
@@ -244,13 +250,29 @@ def movie_play(request):
     # search for base name without path and extension
     content = mediaserver.search_title(path, basename)
     if not content:
-        return JsonResponse({'code':1, 'reason':'no content found'})
+        return JsonResponse({'protocol': '', 'result':'no content found'})
+    if renderer_uri == 'vlc':
+        # vlc-protocol.bat must be installed (https://github.com/stefansundin/vlc-protocol/)
+        return JsonResponse({'protocol': 'vlc', 'result': 'vlc://' + content['uri']})
 
-    # play
+    if renderer_uri == 'browser':
+        # play in brower
+        context = {
+            'movie_uri': content['uri'],
+            'movie_type': 'video/mp4',  #TODO guess type
+        }
+        html = render_to_string("movie/inc_video.html", context)
+        return JsonResponse({'protocol': 'browser', 'result': html})
+
+    # regular DLNA device
+    renderer = DLNA(device_uri=renderer_uri)
+    if not renderer.device:
+        return JsonResponse({'protocol': '', 'result':'no renderer'})
+    # DLNA play
     done, reason = renderer.play_content(content['uri'])
     if not done:
-        return JsonResponse({'code':1, 'reason':'failed to play [{}]'.format(reason)})
-    return JsonResponse({'code':0, 'reason':'done'})
+        return JsonResponse({'protocol': '', 'result':'failed to play [{}]'.format(reason)})
+    return JsonResponse({'protocol': 'dlna', 'result':'done'})
 
 
 def dlna_discover(request):
@@ -272,7 +294,7 @@ def dlna_discover(request):
 def dlna_browse(request):
     ''' display browse directory in mediaserver'''
     device = request.POST.get('mediaserver')
-    dlna_uri, _ = settings.DLNA_MEDIASERVERS[device]
+    dlna_uri, _ = settings.DLNA_MEDIASERVERS[device.lower()]
     mediaserver = DLNA(device_uri=dlna_uri)
     if not mediaserver.device:
         return JsonResponse({'code':1, 'result':'no media server'})
@@ -286,4 +308,36 @@ def dlna_browse(request):
     contents = mediaserver.get_contents(directory, subdirs)
     contents = sorted(contents, key=lambda x: x[0])
     html = render_to_string('movie/table_dlnabrowse.html', {'contents': contents})
+    return JsonResponse({'result':html})
+
+
+def dlna_check_medias(request):
+    ''' check dlna medias accessibility '''
+    device = request.POST.get('mediaserver')
+    dlna_uri, dlna_path = settings.DLNA_MEDIASERVERS[device.lower()]
+    mediaserver = DLNA(device_uri=dlna_uri)
+    if not mediaserver.device:
+        return JsonResponse({'code':1, 'result':'no media server'})
+    # get all media server contents
+    dlna_contents = mediaserver.get_contents(dlna_path, True)
+    dlna_titles = {}
+    for _, _, components in dlna_contents:
+        for name, uri in components:
+            dlna_titles[name] = uri
+
+    contents = []
+    movies = Movie.objects.filter(file__istartswith=device).order_by('title')
+    for movie in movies:
+        _, basename = ntpath.split(movie.file)
+        basename, _ = ntpath.splitext(basename)
+
+        # search for base name without path and extension
+        if basename in dlna_titles:
+            uri = dlna_titles[basename]
+        else:
+            uri = 'NOT FOUND'
+        contents.append((movie.id, movie.title, movie.file, uri))
+        print(movie.title, ' --> ', uri)
+
+    html = render_to_string('movie/inc_table_check_medias.html', {'contents': contents})
     return JsonResponse({'result':html})

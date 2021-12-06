@@ -1,32 +1,42 @@
+{% load static %}
 {% load mytags %}
+
     {% comment %} Movies table include file {% endcomment %}
-    <table class="table table-hover table-sm">
-        <thead class="thead-dark" data-file-width="5px">
+    <table id="movietable"  
+        data-toggle="table"
+        data-sortable="true"
+        class="table table-hover table-sm">
+        <thead class="thead-dark">
             <tr>
-                {% if show_poster %}<th scope="col" width="70px">Poster</th> {% endif %}
-                <th scope="col">Title</th>
-                <th scope="col" width="4em">Year</th>
-                <th scope="col">Synopsys</th> 
-                <th scope="col">File</th>
-                <th scope="col" width="10em">Duration</th>
-                <th scope="col" width="10em">Image</th>
-                <th scope="col" width="8em">Size</th>
+                {% if not 'poster' in hidden_fields %}  <th data-field="poster" data-align="center" data-width="70px">Poster</th> {% endif %}
+                {% comment %} <th data-field="buttons">Actions</th> {% endcomment %}
+                <th data-field="title" data-sortable="true">Title</th>
+                <th data-field="year" data-sortable="true" data-width="4">Year</th>
+                <th data-field="overview" data-width="50" data-width-unit="%">Synopsys</th> 
+                {% if not 'rate' in hidden_fields %} <th data-field="rate" data-sortable="true" data-align="center" data-width="6" data-width-unit="rem">Rate</th> {% endif %}
+                {% if not 'file' in hidden_fields %} <th data-field="file" data-sortable="true" data-width="30" data-width-unit="rem">File</th> {% endif %}
+                <th data-field="duration" data-sortable="true" data-width="6" data-width-unit="rem">Duration</th>
+                {% if not 'screen' in hidden_fields %} <th data-field="resolution" data-sortable="true" data-width="6" data-width-unit="rem">Screen</th> {% endif %}
+                {% if not 'size' in hidden_fields %} <th data-field="size" data-sortable="true" data-align="right" data-width="10" data-width-unit="rem">Size</th> {% endif %}
+                {% if not 'format' in hidden_fields %} <th data-field="format" data-width="10" data-width-unit="rem">Format</th> {% endif %}
             </tr>
         </thead>
         {% for movie in movies %}
         <tr>
-            {% if show_poster %} <td> <img src="{{ movie.poster.all.0.poster.url }}" height="70px"> </td> {% endif %}
-            <td> <a href="https://www.themoviedb.org/movie/{{ movie.id_tmdb }}?language=fr">{{ movie.title }}</a> </td>
+            {% if not 'poster' in hidden_fields %} <td> <img src="{{ movie.poster.all.0.poster.url }}" width="68px"> </td> {% endif %}
+            {% comment %} <td><img id="playmovie" src="{% static 'playmovie.png' %}" width="20px" height="20px"/><img id="details"  src="{% static 'tmdb.png' %}" width="20px" height="20px"/> </td> {% endcomment %}
+            <td style="word-wrap: break-word; white-space: normal"> <a href="{% url 'movie_details' movie.id %}">{{ movie.title }}</a> </td>
             <td> {{ movie.release_year }}</td>
             <td style="word-wrap: break-word; white-space: normal"> {{ movie.overview }} </td>
-            <td> <a href="{% url 'movie_details' movie.id %}">{{ movie.file }}</a></td>
-            <td align="center"> {{ movie.duration|sectoduration }}</td>
-            <td> {{ movie.screen_size }}</td>
-            <td> {{ movie.file_size|smartsize }}</td>
+            {% if not 'rate' in hidden_fields %}  <td> {{ movie.rate }}</td> {% endif %}
+            {% if not 'file' in hidden_fields %} <td> {{ movie.file }}</td> {% endif %}
+            <td> {{ movie.duration|sectoduration }}</td>
+            {% if not 'screen' in hidden_fields %} <td> {{ movie.screen_size }}</td> {% endif %}
+            {% if not 'size' in hidden_fields %} <td> {{ movie.file_size|smartsize }}</td> {% endif %}
+            {% if not 'format' in hidden_fields %} <td> {{ movie.movie_format }}</td> {% endif %}
         </tr>
         {% endfor %}
     </table>
-
 
 
 

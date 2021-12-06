@@ -18,14 +18,17 @@ from django.urls import include, path
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
+from movie.authentication import NopassLoginView
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-
-    # needed when django-glrm is actived
-    path('accounts/login/', auth_views.LoginView.as_view()),
 
     path('', include('movie.urls')),
 
 ]  + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
+if settings.USE_NO_USER_PASSWORD:
+    urlpatterns += [path('accounts/login/', NopassLoginView.as_view())]
+else:
+    urlpatterns += [path('accounts/login/', auth_views.LoginView.as_view())]

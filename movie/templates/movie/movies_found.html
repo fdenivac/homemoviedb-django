@@ -2,9 +2,8 @@
 {% load static %}
 {% load mytags %}
 
-{% block title %}
+{% block title %} - Movies{% endblock %}
 
-{% endblock %}
 
 {% block content %}
 
@@ -12,26 +11,16 @@
     body {
         min-width:1200px;
         width: auto;            /* Firefox will set width as auto */
-        width:1200px;           /* As IE ignores !important it will set width as 1000px; */
     }
-    th{
-        max-width: 100px;
-        text-align: center;
-    }
-    td{
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 100px;
-    }
-    </style>
+</style>
 
 
     <h2>{{ table_type }}</h2>
+    <div id="movies">
     {% include "movie/inc_tablemovies.html" %}
-    
+    </div>
     {% include "movie/inc_pagination.html" %}
     
-
-
 {% endblock %}
+
+

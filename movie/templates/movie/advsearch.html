@@ -1,0 +1,108 @@
+{% extends 'movie/base.html' %}
+{% load static %}
+{% load mytags %}
+
+{% block title %} - Advanced Search{% endblock %}
+
+{% block content %}
+
+<h3>Advanced Search</h3>
+<br>
+
+
+<div id="advsearch" class="container p-3 my-3 rounded" style="background-color: rgb(220, 230, 250)" >
+<form method="POST" action="{% url 'advanced_search' %}">
+
+  <div class="row">
+    <div class="col">
+      <label class="form-check-label" for="ssearch">Search &nbsp;</label>
+      <input class="form-control mr-sm-2" id="ssearch" type="text" name="query" value="{{ query }}" placeholder="Search..." aria-label="Search">
+    </div>
+    <div class="col">
+      <label class="form-check-label" for="sorder">Order by</label>
+      <select class="form-control mr-sm-2" id="sorder" name="order" aria-label="order">
+        <option {% if order == 'title' %} selected {% endif %} value="title">Title</option>
+        <option {% if order == '-release_year' %} selected {% endif %} value="-release_year">Year</option>
+        <option {% if order == '-rate' %} selected {% endif %} value="-rate">Rate</option>
+        <option {% if order == '-file_size' %} selected {% endif %} value="-file_size">Size</option>
+        <option {% if order == 'duration' %} selected {% endif %}value="duration">Duration</option>
+      </select>
+    </div>
+    <div class="col">
+      <label class="form-check-label" for="svol">Volume &nbsp;</label>
+      <select class="form-control mr-sm-2" id="svol" name="vol" aria-label="vol">
+        {% for vol in volumes %}
+        <option value="{{ vol.0 }}" {% if vol.0 == volume %} selected {% endif %} >{{ vol.1 }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <div class="row">
+      <h4>Search in ...</h4>
+  </div>
+  <div class="row">
+    <div class="col">
+      <div class="form-check form-check-inline">
+      <input class="form-check-input" type="checkbox" id="cb1" name="title" value="1" {% if title %}checked{% endif %}>
+      <label class="form-check-label" for="cb1">Title</label>
+      </div>
+    </div>
+    <div class="col">
+      <div class="form-check form-check-inline">
+      <input class="form-check-input" type="checkbox" id="cb2" name="title_orig" value="1" {% if title_orig %}checked{% endif %}>
+      <label class="form-check-label" for="cb2">Original Title</label>
+      </div>
+    </div>
+    <div class="col">
+      <div class="form-check form-check-inline">
+      <input class="form-check-input" type="checkbox" id="cb3" name="overview" value="1" {% if overview %}checked{% endif %}>
+      <label class="form-check-label" for="cb3">Overview</label>
+      </div>
+    </div>
+    <div class="col">
+      <div class="form-check form-check-inline">
+      <input class="form-check-input" type="checkbox" id="cb4" name="format" value="1" {% if format %}checked{% endif %}>
+      <label class="form-check-label" for="cb4">Format</label>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col">
+      <div class="form-check form-check-inline">
+      <input class="form-check-input" type="checkbox" id="cb5" name="file" value="1" {% if size %}checked{% endif %}>
+      <label class="form-check-label" for="cb5">File</label>
+      </div>
+    </div>
+    <div class="col">
+      <div class="form-check form-check-inline">
+      <input class="form-check-input" type="checkbox" id="cb6" name="people" value="1" {% if people %}checked{% endif %}>
+      <label class="form-check-label" for="cb6">People</label>
+      </div>
+    </div>
+    <div class="col">
+      <div class="form-check form-check-inline">
+      <input class="form-check-input" type="checkbox" id="cb7" name="character" value="1" {% if character %}checked{% endif %}>
+      <label class="form-check-label" for="cb7">Character</label>
+      </div>
+    </div>
+    <div class="col">
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col">
+      <input name="csrfmiddlewaretoken" type="hidden" value="{{ csrf_token }}">
+      <button class="btn btn-outline-secondary my-2 my-sm-0" type="submit" style="background-color: #ccd; border:none">Search</button>
+    </div>
+  </div>
+</form>
+</div>
+
+
+
+
+
+
+
+{% endblock %}

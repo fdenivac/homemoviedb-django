@@ -21,6 +21,7 @@ from django.core.management.base import BaseCommand
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
 from django.core.files.base import ContentFile
+from django.conf import settings
 
 from tmdbv3api import TMDb, Movie as TMDbMovie, Search as TMDbSearch, Configuration
 
@@ -73,6 +74,11 @@ def smart_probe(ffmpeg_json):
     streams = ' | '.join(streams)
     ffmpeg_json['smart_streams'] = streams
     ffmpeg_json['format']['screen_size'] = screen_size
+        # fields can be missing (damaged video file ?): force it
+    ffmpeg_json['format']['bit_rate'] = ffmpeg_json['format'].get('bit_rate', 0)
+    ffmpeg_json['format']['duration'] = ffmpeg_json['format'].get('duration', 0)
+    # duplicate title in format field
+    ffmpeg_json['title'] = ffmpeg_json['format']['tags']['title'] if ffmpeg_json['format'].get('tags') and ffmpeg_json['format']['tags'].get('title') else ''
     return ffmpeg_json
 
 
@@ -110,6 +116,7 @@ def smart_size(size, unit='B'):
         return '%.2f M%s' % (size/(1000*1000.), unit)
     if size > 1000:
         return '%.2f K%s' % (size/(1000.), unit)
+    return '%.2f %s' % (size, unit)
 
 
 
@@ -233,9 +240,9 @@ class Command(BaseCommand):
             if not images['posters']:
                 print('  None TMDB posters')
                 return
-        if len(images['posters']) > 4:
-            print("  Ignore {0} on {1}".format(len(images['posters']) - 4, len(images['posters'])))
-        for num, poster in enumerate(images['posters'][:4]):
+        if len(images['posters']) > settings.MAX_POSTERS:
+            print("  Ignore {0} on {1}".format(len(images['posters']) - settings.MAX_POSTERS, len(images['posters'])))
+        for num, poster in enumerate(images['posters'][:settings.MAX_POSTERS]):
             try:
                 rel_path = poster['file_path']
                 url = "{0}{1}{2}".format(self.config['images']['base_url'], 'w500', rel_path)

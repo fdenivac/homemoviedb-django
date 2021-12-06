@@ -27,7 +27,7 @@ SECRET_KEY = 'r8c8cz*!3ein9xxa*f5$+o26#&j0k@x)(-k=43-nll=x9p!40$'
 DEBUG = True
 
 #
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.1.36']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.1.23', '192.168.1.36', 'diskstation']
 
 
 # Application definition
@@ -118,13 +118,17 @@ USE_L10N = True
 
 USE_TZ = True
 
-# locale specification (FC)
+# locale specification
 if platform.system() == 'Linux':
     LOCALE = 'fr_FR.utf8'
 else:
-    # au moins sur windows
+    # (windows)
     LOCALE = 'fr'
 
+
+
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 
 # Static files (CSS, JavaScript, Images)
@@ -158,6 +162,20 @@ PUBLIC_PATHS = [
 #  Specific settings for this application outside django
 #
 
+LOGIN_REDIRECT_URL = 'home'
+
+# Do not use password for login standard users (no admin nor staff)
+USE_NO_USER_PASSWORD = True
+
+if USE_NO_USER_PASSWORD:
+    # specific athentification backend for login without password
+    AUTHENTICATION_BACKENDS = [
+        'movie.authentication.NopassAuthBackend'
+    ]
+
+# no session expiration before 100 years !
+SESSION_COOKIE_AGE = 3600 * 24 * 365 * 100
+
 # number of movies per html page
 MOVIES_PER_PAGE = 25
 
@@ -169,17 +187,26 @@ ALL_VOLUMES = 'All Volumes'
 
 # Populate volumes labels in list box, declare MediaServers
 VOLUMES = [
-    # Declare for each volume :
-    #   (volume label, volume alias, volume_type, (DLNA device location, DLNA movie path))
+    # for each volume :
+    #   (volume_label, volume_alias, volume_type, (DLNA_device, DLNA_movie_path))
     (ALL_VOLUMES, ALL_VOLUMES, '', (None, None)),
     ('DiskStation', 'Synology', 'network', ('http://192.168.1.23:50001/desc/device.xml', 'Vidéo/Films')),
     ('Expansion', 'Expansion', 'harddisk', (None, None)),
 ]
-DLNA_MEDIASERVERS = {vol[0]:vol[3] for vol in VOLUMES}
+DLNA_MEDIASERVERS = {vol[0].lower():vol[3] for vol in VOLUMES}
 
 DLNA_RENDERERS = [
-    # Declare for each device :
-    #   (the DLNA Device location, a smart name)
+    # for each device :
+    #   (DLNA Device location, a smart name)
     ('http://192.168.1.14:42300/description.xml', 'Orange Decoder'),
     ('http://192.168.1.15:52235/dmr/SamsungMRDesc.xml', 'TV Samsung'),
+    # specific name for view on computer :
+    ('browser', 'View in Browser'),
+    ('vlc', 'View in VLC'),
 ]
+
+# default hidden fields for movies table (in 'poster, 'screen', 'size', 'file', 'rate', 'format)
+HIDDEN_FIELDS = ['size', 'file', 'format']
+
+# Max number of posters to import from TMDB
+MAX_POSTERS = 4

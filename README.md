@@ -1,12 +1,16 @@
 # Home Movie Catalog
 
 A basic web site built around django and a sqlite database. The purpose is to find and describe movies available on various locations in a home environment.
-  
-Movies are parsed by ffmeg and metadata taken from TMBD site via API (movie name guessed from filename) and stored in a local database.
+
+The local sqlite database stores :
+- technical informations on video files (audio/video encoding, streams available, duration...), retrieved with ffprobe (ffmpeg tool)
+- movie metadatas (title, release year, posters, team, ...), taken from TMBD site (via python api)
 
 The site acts as a DLNA controler : videos stored on DLNA devices (as synology) can be played on DLNA renderer (as TV).
+Videos can be played too embeded in web page (but with limited support via HTML 5 _video_ tag), or externally in VLC (require to install [vlc_protocol](https://github.com/stefansundin/vlc-protocol) )
 
-Each volume disk label is used in place of windows drive letter, so, they must be unique.
+
+Because the database uses disk labels names instead of disk letters in video filenames, these disk labels names must be unique
 
 Tested environment :
 - Web site installed on Linux (Synology)
@@ -19,10 +23,14 @@ Tested environment :
 - install python dependencies
     pip install -r requirements.txt
 
-- install ffmpeg and accessible in command path
+- install ffmpeg, and add bin folder to the system path
 
 - configure settings.py :
     
+  - If user login is not required, comment line "_'global_login_required.GlobalLoginRequiredMiddleware'_" in section MIDDLEWARE
+
+  - Set "_USE_NO_USER_PASSWORD = True_" for user login without password (users created with "_manage.py createuser_")
+
   - Modify Internationalization section as needed
 
   - Set VOLUMES variable for declare volumes used and DLNA infos
@@ -62,26 +70,50 @@ Tested environment :
             #   (DLNA Device name, Smart name)
             ('http://192.168.1.15:52235/dmr/SamsungMRDesc.xml', 'Bedroom'),
             ('http://192.168.1.17:52235/dmr/SamsungMRDesc.xml', 'Living Room'),
+
+            # specific name for view video on computer :
+            ('browser', 'View in Browser'),
+            ('vlc', 'View in VLC'),            
         ]
 
-  - Modify home page (movie/templates/movie/home.html) for correct links (disk labels, ...)
+- Modify home page (movie/templates/movie/home.html) for correct links (disk labels, ...)
 
-  - Initialize django :
+- Initialize django :
 
         python manage.py migrate
         ...
+        python manage.py collectstatic
+        ...        
         python manage.py createsuperuser
         ...
  
- - Add movies to database :
+- Add movies to database (Windows only):
+
+    locally on web server:
 
         python manage.py movieparsing  G:\\Films
 
-    or remotely, if  server is not installed locally (use superuser created):
+    or remotely, if server is not installed locally (use superuser created):
 
         python manage_moviesite.py --password --user=john  "G:\Movies" "\\DiskStation\video\Movies"
 
- - For testing
+- For testing
 
         python manage.py runserver
+
+- For viewing video on PC, install [vlc_protocol](https://github.com/stefansundin/vlc-protocol) scripts, and next, copy vlc-volumelabel.py and vlc-protocol.bat in VLC directory.
+
+<br>
+<br>
+
+# About DLNA
+
+Many DLNA servers use the metadata 'title' of files as content name. If not present, the filename is used as title.
+
+Because "Home video catalog" can play DLNA video only if the video filemane is equal to the DLNA title, 
+the _manage_moviesite.py_ has an option **--fix-title** for remove video metadata _title_ from movie.
+
+        manage_moviesite.py --fix-title=%empty% \\\\synology\\video\\Films\\*
+
+
 
