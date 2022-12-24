@@ -1,11 +1,13 @@
-'''
+"""
 Database Models
-'''
+"""
 
 from django.db import models
 
+
 class Movie(models.Model):
-    ''' Movie table  '''
+    """Movie table"""
+
     # full path of movie file
     file = models.TextField(unique=True, blank=False, null=False)
     # file size
@@ -41,16 +43,17 @@ class Movie(models.Model):
     file_status = models.TextField(blank=False, null=False)
 
     def __str__(self):
-        return u'{} - {} [{}]'.format(self.title, self.release_year, self.id)
+        return "{} - {} [{}]".format(self.title, self.release_year, self.id)
 
     class Meta:
-        ordering = ('title', )
+        ordering = ("title",)
 
 
 class Team(models.Model):
-    ''' keys for movie '''
+    """keys for movie"""
+
     # movie reference
-    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='team')
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name="team")
     # job (Actor, Director, ...)
     job = models.TextField(blank=False, null=False)
     # person name
@@ -59,24 +62,32 @@ class Team(models.Model):
     extension = models.TextField(null=True)
 
     def __str__(self):
-        return u'{} - {} - {}'.format(self.movie.title, self.movie.release_year, self.name)
+        return "{} - {} - {}".format(
+            self.movie.title, self.movie.release_year, self.name
+        )
 
     class Meta:
-        unique_together = ('job', 'name', 'movie')
-        ordering = ('movie', 'name', )
+        unique_together = ("job", "name", "movie")
+        ordering = (
+            "movie",
+            "name",
+        )
 
 
 class Poster(models.Model):
-    ''' Movie Posters '''
+    """Movie Posters"""
+
     # movie reference
-    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='poster')
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name="poster")
     # TMDB url
     url_tmdb = models.TextField(blank=False, null=False)
     # image
-    poster = models.ImageField(upload_to='posters/', null=True)
+    poster = models.ImageField(upload_to="posters/", null=True)
 
     def __str__(self):
-        return u'{} - {} - {}'.format(self.movie.title, self.movie.release_year, self.url_tmdb)
+        return "{} - {} - {}".format(
+            self.movie.title, self.movie.release_year, self.url_tmdb
+        )
 
     class Meta:
-        ordering = ('movie', )
+        ordering = ("movie",)

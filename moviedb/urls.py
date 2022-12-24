@@ -22,13 +22,11 @@ from movie.authentication import NopassLoginView
 
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-
-    path('', include('movie.urls')),
-
-]  + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    path("admin/", admin.site.urls),
+    path("", include("movie.urls")),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.USE_NO_USER_PASSWORD:
-    urlpatterns += [path('accounts/login/', NopassLoginView.as_view())]
+    urlpatterns += [path("accounts/login/", NopassLoginView.as_view())]
 else:
-    urlpatterns += [path('accounts/login/', auth_views.LoginView.as_view())]
+    urlpatterns += [path("accounts/login/", auth_views.LoginView.as_view())]

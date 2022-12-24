@@ -8,59 +8,96 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Movie',
+            name="Movie",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('file', models.TextField(unique=True)),
-                ('file_size', models.IntegerField(null=True)),
-                ('movie_format', models.TextField(null=True)),
-                ('bitrate', models.IntegerField(null=True)),
-                ('screen_size', models.TextField(null=True)),
-                ('duration', models.IntegerField(default=0)),
-                ('original_title', models.TextField()),
-                ('title', models.TextField()),
-                ('id_tmdb', models.IntegerField(null=True)),
-                ('viewed', models.IntegerField(default=0)),
-                ('rate', models.IntegerField(default=0)),
-                ('file_status', models.TextField()),
-                ('release_year', models.IntegerField(default=0)),
-                ('overview', models.TextField(blank=True)),
-                ('genres', models.TextField(blank=True)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("file", models.TextField(unique=True)),
+                ("file_size", models.IntegerField(null=True)),
+                ("movie_format", models.TextField(null=True)),
+                ("bitrate", models.IntegerField(null=True)),
+                ("screen_size", models.TextField(null=True)),
+                ("duration", models.IntegerField(default=0)),
+                ("original_title", models.TextField()),
+                ("title", models.TextField()),
+                ("id_tmdb", models.IntegerField(null=True)),
+                ("viewed", models.IntegerField(default=0)),
+                ("rate", models.IntegerField(default=0)),
+                ("file_status", models.TextField()),
+                ("release_year", models.IntegerField(default=0)),
+                ("overview", models.TextField(blank=True)),
+                ("genres", models.TextField(blank=True)),
             ],
             options={
-                'ordering': ('title',),
+                "ordering": ("title",),
             },
         ),
         migrations.CreateModel(
-            name='Team',
+            name="Team",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('job', models.TextField()),
-                ('name', models.TextField()),
-                ('extension', models.TextField(null=True)),
-                ('movie', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='team', to='movie.Movie')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("job", models.TextField()),
+                ("name", models.TextField()),
+                ("extension", models.TextField(null=True)),
+                (
+                    "movie",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="team",
+                        to="movie.Movie",
+                    ),
+                ),
             ],
             options={
-                'unique_together': {('job', 'name', 'movie')},
-                'ordering': ('movie', 'name'),
+                "unique_together": {("job", "name", "movie")},
+                "ordering": ("movie", "name"),
             },
         ),
         migrations.CreateModel(
-            name='Poster',
+            name="Poster",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('url_tmdb', models.TextField()),
-                ('poster', models.ImageField(null=True, upload_to='posters/')),
-                ('movie', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='poster', to='movie.Movie')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("url_tmdb", models.TextField()),
+                ("poster", models.ImageField(null=True, upload_to="posters/")),
+                (
+                    "movie",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="poster",
+                        to="movie.Movie",
+                    ),
+                ),
             ],
             options={
-                'ordering': ('movie',),
-                'unique_together': set(),
+                "ordering": ("movie",),
+                "unique_together": set(),
             },
         ),
     ]

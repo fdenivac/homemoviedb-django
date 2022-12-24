@@ -25,12 +25,17 @@ from django.core.exceptions import ValidationError, ObjectDoesNotExist
 
 
 class NopassAuthBackend(BaseBackend):
-    ''' Authentification Backend : no password requiried for some user '''
+    """Authentification Backend : no password requiried for some user"""
+
     def authenticate(self, request, username, password):
         try:
             user = User.objects.get(username=username)
             # possible login without password for user not superuser or in staff
-            if not (user.is_superuser or user.is_staff) and not user.password and not password:
+            if (
+                not (user.is_superuser or user.is_staff)
+                and not user.password
+                and not password
+            ):
                 success = True
             else:
                 success = user.check_password(password)
@@ -48,45 +53,46 @@ class NopassAuthBackend(BaseBackend):
 
 
 class NopassLoginForm(AuthenticationForm):
-    ''' Authentification form : allow empty password (no required) '''
-    username = UsernameField(widget=forms.TextInput(attrs={'autofocus': True}))
+    """Authentification form : allow empty password (no required)"""
+
+    username = UsernameField(widget=forms.TextInput(attrs={"autofocus": True}))
     password = forms.CharField(
         required=False,
         label=_("Password"),
         strip=False,
-        widget=forms.PasswordInput(attrs={'autocomplete': 'new-password'}),
+        widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}),
     )
 
     def clean(self):
-        username = self.cleaned_data.get('username')
-        password = self.cleaned_data.get('password')
+        username = self.cleaned_data.get("username")
+        password = self.cleaned_data.get("password")
         user = authenticate(username=username, password=password)
         if not user:
-            raise ValidationError(_('Invalid username or password'))
+            raise ValidationError(_("Invalid username or password"))
         return self.cleaned_data
 
 
-
 class NopassLoginView(LoginView):
-    ''' login view (form.get_user() replaced by  authenticate(...) '''
+    """login view (form.get_user() replaced by  authenticate(...)"""
+
     authentication_form = NopassLoginForm
-    template_name = 'registration/login.html'
+    template_name = "registration/login.html"
 
     def form_valid(self, form):
-        username = form.cleaned_data.get('username')
-        raw_password = form.cleaned_data.get('password')
+        username = form.cleaned_data.get("username")
+        raw_password = form.cleaned_data.get("password")
         account = authenticate(username=username, password=raw_password)
         auth_login(self.request, account)
         return HttpResponseRedirect(self.get_success_url())
 
 
-
 def confirm_logout(request):
-    ''' confirm logout dialog '''
-    return render(request, 'registration/logout.html', {})
+    """confirm logout dialog"""
+    return render(request, "registration/logout.html", {})
+
 
 def logout(request):
-    ''' logout from site '''
+    """logout from site"""
     try:
         session = Session.objects.get(session_key=request.session.session_key)
         session.delete()
