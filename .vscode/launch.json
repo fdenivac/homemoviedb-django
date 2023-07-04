@@ -1,5 +1,4 @@
 {
-
     "version": "0.2.0",
     "configurations": [
         {
@@ -7,7 +6,10 @@
             "type": "python",
             "request": "launch",
             "program": "manage.py",
-            "args": ["runserver", "192.168.1.36:6062"],
+            "args": [
+                "runserver",
+                "192.168.1.36:6062"
+            ],
             "console": "integratedTerminal",
             "justMyCode": false
         },
@@ -16,34 +18,57 @@
             "type": "python",
             "request": "launch",
             "program": "manage.py",
-            // "args": ["movieparsing",  "-v 1",  "\\\\DiskStation\\video\\Movies", "--simu", "--force-parsing", "--exact-name"  ],
-            "args": ["movieparsing",  "-v 1",  "--silent-exists", "G:\\Movies", "--simu" ],
             "console": "integratedTerminal",
-            "justMyCode": false
+            "justMyCode": false,
+            "args": [
+                "movieparsing",
+                "-v 1",
+                "--silent-exists",
+                "--exact-name",
+                "I:\\Films\\A*",
+            ],
         },
-
         {
             "name": "dlna",
             "type": "python",
             "request": "launch",
             "program": "manage.py",
-            "args": ["dlna_infos",  "-v 3",  "--smart_discover" ],
-            // "args": ["dlna_infos",  "--contents=http://192.168.1.3:50001/desc/device.xml;Video/Movies" ],
+            "args": [
+                "dlna_infos",
+                "-v 3",
+                "--smart_discover"
+            ],
             "console": "integratedTerminal",
             "justMyCode": false
         },
-
+        {
+            "name": "mailing",
+            "type": "python",
+            "request": "launch",
+            "program": "manage.py",
+            "args": [
+                "usermail",
+                "-v 3",
+                "--days=70",
+                "--html",
+                "-u=john",
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
         {
             "name": "append_remote",
             "type": "python",
             "request": "launch",
             "program": "manage_moviesite.py",
-            "args": [ "--address=http://localhost:8000",  "--user=john", "--password", "--silent-exists", "--exact-name", "\\\\DiskStation\\video\\Films\\Arte", ],
-            // "args": [ "--address=http://localhost:8000", "--user=john", "--password", "--exact-name", "G:\\Films\\Armored.avi", "--force-parsing", "--idtmdb=339513"  ],
+            "args": [
+                "--address=http://192.168.1.36:6062",
+                "--user=john",
+                "--password=XXXX",
+                "status",
+            ],
             "console": "integratedTerminal",
             "justMyCode": false
         },
-
-
     ]
 }

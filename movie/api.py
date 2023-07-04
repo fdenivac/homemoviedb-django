@@ -18,8 +18,10 @@ from django.template.loader import render_to_string
 from django.conf import settings
 
 from movie.management.commands.movieparsing import Command, smart_probe
-from movie.models import Movie
+from movie.models import MovieFile
+from movie.moviedesc import MovieDescription
 from movie.dlna import DLNA, dlna_discover as discover
+from movie.views import is_dlnable
 
 
 def makedir(directory):
@@ -33,7 +35,6 @@ def makedir(directory):
             if excpt.errno == errno.EEXIST:
                 return True
             else:
-                print(excpt)
                 return False
     return True
 
@@ -43,18 +44,31 @@ def append_movie(request):
     """
     AJAX append movie to DB
         - movie format (tracks, rate...) must be parsed by source
+    Input JSON :
+        options : <STRING ARRAY>
+        id_tmdb :
+        [id_db]
+        file
+        year
+        ffprobe
+    Return JSON :
+        code: <NUM>,
+        num_movies: <NUM>,
+        result: <STRING>,
+        id_added: <NUM>[OPTIONAL],
     """
 
     datas_json = json.loads(request.POST["json"])
     options = json.loads(datas_json["options"])
     id_tmdb = datas_json["id_tmdb"]
-    movie_file = datas_json["file"]
+    id_db = datas_json["id_db"] if "id_db" in datas_json else None
+    movie_file = datas_json["file"].replace("/", "\\")
     _, basename = ntpath.split(movie_file)
-    title = datas_json["title"]
     year = datas_json["year"]
     movie_format = json.loads(datas_json["ffprobe"])
     # add smart infos to original ffmpeg probe
-    container = smart_probe(movie_format)
+    if not id_db:
+        container = smart_probe(movie_format)
 
     manage = Command()
     # set options in Command
@@ -63,41 +77,57 @@ def append_movie(request):
         manage.options[option] = options[option]
     manage.open_tmdb()
 
+    if id_db:
+        src_movie = manage.get_moviefile(id_db)
+        # on copy or move file already in DB
+        manage.add_or_update_moviefile(
+            movie_file,
+            "OK",
+            src_movie.file_size,
+            src_movie.movie_format,
+            src_movie.bitrate,
+            src_movie.screen_size,
+            src_movie.duration,
+            src_movie.movie,
+        )
+        return JsonResponse(
+            {
+                "code": 0,
+                "num_movies": 1,
+                "result": f'Append copy "{src_movie.movie.title}" - {src_movie.movie.release_year} (id {id_db})',
+                "id_added": id_db,
+            }
+        )
+
     if id_tmdb:
-        movies = manage.get_tmdb(id_tmdb)
-        if not movies:
+        movie = MovieDescription.from_id(manage.tmdb.movie, id_tmdb)
+        if not movie:
             return JsonResponse(
-                {"code": -1, "num_movies": 0, "result": "TMDB id not found"}
+                {"code": -1, "num_movies": 0, "reason": "TMDB id not found"}
             )
-        (
-            id_movie,
-            title,
-            original_title,
-            release_date,
-            overview,
-            genres,
-            original_language,
-        ) = movies[0]
+        # create/update Movie description, Team and Posters
+        movie_desc = manage.add_or_update_moviedesc(movie)
+        manage.add_or_update_team(movie_desc)
+        manage.add_or_update_poster(movie_desc, movie.original_language)
+        # create/update MovieFile
         fmt = container["format"]
-        movie = manage.add_or_update_movie(
+        moviefile = manage.add_or_update_moviefile(
             movie_file,
             "OK",
             fmt["size"],
-            "container: %s | %s" % (fmt["format_name"], container["smart_streams"]),
+            f'container: {fmt["format_name"]} | {container["smart_streams"]}',
             fmt["bit_rate"],
             fmt["screen_size"],
             int(float(fmt["duration"])),
-            title,
-            original_title,
-            release_date.split("-")[0],
-            overview,
-            genres,
-            id_movie,
+            movie_desc,
         )
-        manage.add_or_update_team(movie)
-        manage.add_or_update_poster(movie, original_language)
         return JsonResponse(
-            {"code": 0, "num_movies": 1, "result": "Append/update done"}
+            {
+                "code": 0,
+                "num_movies": 1,
+                "result": f'Append/update "{movie_desc.title}" - {movie_desc.release_year} (id {moviefile.id})',
+                "id_added": moviefile.id,
+            }
         )
 
     # determine movie title, year
@@ -106,93 +136,106 @@ def append_movie(request):
     year = None
     words = moviename.split(".")
     if len(words) > 1:
-        last_word = words[-1]
-        if last_word.isnumeric() and int(last_word) > 1900:
-            year = last_word
-            moviename = " ".join(words[:-1])
+        for _id in range(len(words) - 1, 0, -1):
+            year = words[_id]
+            if year.isnumeric() and int(year) > 1900 and int(year) < 2100:
+                moviename = " ".join(words[:_id])
+                break
     # replace various characters
     moviename = moviename.replace(".", " ").replace("_", " ")
     # and research in TBDB
-    movies = manage.search_tmdb(moviename, year=year)
+    movies = MovieDescription.from_search(manage.tmdb.search, moviename, year=year)
 
     if len(movies) == 0:
-        return JsonResponse({"code": 1, "num_movies": 0, "result": "None suggestions"})
+        return JsonResponse({"code": 0, "num_movies": 0, "result": "None suggestions"})
 
     if len(movies) > 1 and options["exact_name"]:
         # check if exact title exists in list
         exact_movies = []
-        for num, (_, title, original_title, _, _, _, _) in enumerate(movies):
-            if moviename.lower() == title.lower():
+        for num, moviedesc in enumerate(movies):
+            if moviename.lower() == moviedesc.title.lower():
                 exact_movies.append(movies[num])
             else:
-                if f" (titre original: {moviename.lower()})" == original_title.lower():
+                if (
+                    f" (titre original: {moviename.lower()})"
+                    == moviedesc.original_title.lower()
+                ):
                     exact_movies.append(movies[num])
         if len(exact_movies) == 1:
             movies = exact_movies
 
     if len(movies) > 1:
-        result = "{} suggestions".format(len(movies))
+        result = f"{len(movies)} suggestions"
+        datas = [
+            [
+                movie.id_tmdb,
+                movie.title,
+                movie.original_title,
+                movie.release_date,
+                movie.overview,
+                None,
+                movie.original_language,
+            ]
+            for movie in movies
+        ]
         return JsonResponse(
-            {"code": 2, "num_movies": len(movies), "result": result, "movies": movies}
+            {"code": 0, "num_movies": len(movies), "result": result, "movies": datas}
         )
 
     # here, we have an unique movie
-    id_movie = movies[0][0]
-    (
-        id_movie,
-        title,
-        original_title,
-        release_date,
-        overview,
-        genres,
-        original_language,
-    ) = manage.get_tmdb(id_movie)[0]
+    moviedesc = movies[0]
+    # MovieDescription.from_search doesn't return genres/, so update
+    moviedesc.get_full_description(manage.tmdb.movie)
+    # create/update Movie description, Team and Posters
+    movie_db = manage.add_or_update_moviedesc(moviedesc)
+    manage.add_or_update_team(movie_db)
+    manage.add_or_update_poster(movie_db, moviedesc.original_language)
+    # create/update MovieFile
     fmt = container["format"]
-    movie = manage.add_or_update_movie(
+    moviefile = manage.add_or_update_moviefile(
         movie_file,
         "OK",
         fmt["size"],
-        "container: %s | %s" % (fmt["format_name"], container["smart_streams"]),
+        f'container: {fmt["format_name"]} | {container["smart_streams"]}',
         fmt["bit_rate"],
         fmt["screen_size"],
         int(float(fmt["duration"])),
-        title,
-        original_title,
-        release_date.split("-")[0],
-        overview,
-        genres,
-        id_movie,
+        movie_db,
     )
-    manage.add_or_update_team(movie)
-    manage.add_or_update_poster(movie, original_language)
-    return JsonResponse({"code": 0, "num_movies": 1, "result": "Append/update done"})
+    return JsonResponse(
+        {
+            "code": 0,
+            "num_movies": 1,
+            "result": f'Append/update "{movie_db.title}" - {movie_db.release_year} (id {moviefile.id})',
+            "id_added": moviefile.id,
+        }
+    )
 
 
-# @staff_member_required
+@staff_member_required
 def movie_info(request):
-    """get movie info"""
-    try:
-        data_req = json.loads(request.POST["json"])
-    except KeyError:
-        return JsonResponse({"code": -2})
-
-    movie_file = data_req["file"]
+    """get movie info by id or filename"""
+    data_req = json.loads(request.POST["json"])
     # check if file exists in database
     try:
-        movie = Movie.objects.get(file__iexact="%s" % movie_file)
+        movie_file = data_req["file"]
+        if isinstance(movie_file, int) or movie_file.isdigit():
+            movie = MovieFile.objects.get(id=int(movie_file))
+        else:
+            movie = MovieFile.objects.get(file__iexact=movie_file)
     except ObjectDoesNotExist:
         return JsonResponse({"code": 1, "reason": "not found"})
-    except Exception as _e:
-        return JsonResponse({"code": -2, "reason": str(_e)})
 
     data_resp = {
         "code": 0,
         "reason": "ok",
-        "title": movie.title,
-        "original_title": movie.original_title,
-        "release_year": movie.release_year,
+        "id": movie.id,
+        "id_tmdb": movie.movie.id_tmdb,
+        "file": movie.file,
+        "title": movie.movie.title,
+        "original_title": movie.movie.original_title,
+        "release_year": movie.movie.release_year,
         "duration": movie.duration,
-        "format": movie.movie_format,
         "screen_size": movie.screen_size,
         "movie_format": movie.movie_format,
     }
@@ -200,16 +243,16 @@ def movie_info(request):
     return JsonResponse(data_resp)
 
 
-# @staff_member_required
+@staff_member_required
 def movies_dir(request):
     """return movies in directory"""
     try:
         data_req = json.loads(request.POST["json"])
     except KeyError:
-        return JsonResponse({"code": -2})
+        return JsonResponse({"code": -2, "reason": "Key error"})
     directory = data_req["dir"]
     recurs = data_req["recurs"]
-    movies = Movie.objects.filter(file__istartswith=directory)
+    movies = MovieFile.objects.filter(file__istartswith=directory)
     if recurs:
         results = [movie.file for movie in movies]
     else:
@@ -224,22 +267,80 @@ def movies_dir(request):
     return JsonResponse({"code": 0, "num_movies": len(movies), "movies": results})
 
 
-# @staff_member_required
-def set_movie_status(request):
-    """set movie file status"""
+@staff_member_required
+def update_movie(request):
+    """update some fields in movie"""
     try:
         data_req = json.loads(request.POST["json"])
     except KeyError:
-        return JsonResponse({"code": -2})
-    movie_file = data_req["file"]
-    status = data_req["status"]
+        return JsonResponse({"code": -2, "reason": "Key error"})
     try:
-        movie = Movie.objects.get(file__iexact="%s" % movie_file)
-        movie.file_status = status
-        movie.save()
-        return JsonResponse({"code": 0, "reason": "ok"})
+        movie = MovieFile.objects.get(id=data_req["id"])
     except ObjectDoesNotExist:
         return JsonResponse({"code": 1, "reason": "not found"})
+
+    if "file" in data_req:
+        movie.file = data_req["file"]
+    if "file_status" in data_req:
+        movie.file_status = data_req["file_status"]
+    if "viewed" in data_req:
+        movie.viewed = data_req["viewed"]
+    if "rate" in data_req:
+        movie.rate = data_req["rate"]
+    try:
+        if not data_req.get("simu", False):
+            movie.save()
+    except Exception as _e:
+        return JsonResponse({"code": 1, "reason": _e})
+    return JsonResponse({"code": 0})
+
+
+@staff_member_required
+def remove_movie(request):
+    """remove MovieFile object"""
+    try:
+        data_req = json.loads(request.POST["json"])
+    except KeyError:
+        return JsonResponse({"code": -2, "reason": "key error"})
+    try:
+        movie = MovieFile.objects.get(id=data_req["id"])
+    except ObjectDoesNotExist:
+        return JsonResponse({"code": 1, "reason": "not found"})
+
+    try:
+        if not data_req.get("simu", False):
+            movie.delete()
+    except Exception as _e:
+        return JsonResponse({"code": 1, "reason": _e})
+    return JsonResponse({"code": 0})
+
+
+def movies_ids(request):
+    """return list of column : MovieFile.file, MovieFile.id"""
+    try:
+        data_req = json.loads(request.POST["json"])
+        offset = data_req["offset"]
+        count = data_req["count"]
+        column = data_req["column"]
+    except KeyError:
+        return JsonResponse({"code": -2, "reason": "json key error"})
+    if column == "file":
+        datas = [f for f in MovieFile.objects.all().values_list("file", flat=True)]
+    elif column == "idfile":
+        datas = [f for f in MovieFile.objects.all().values_list("id", flat=True)]
+    else:
+        return JsonResponse({"code": -2, "reason": "invalid column"})
+    if count == -1:
+        end = None
+    else:
+        end = offset + count
+    return JsonResponse(
+        {
+            "code": 0,
+            "num_datas": len(datas[offset:end]),
+            "datas": datas[offset:end],
+        }
+    )
 
 
 def movie_play(request):
@@ -251,13 +352,15 @@ def movie_play(request):
             protocol : 'dlna', 'browser', 'vlc', or '' on error
             result : html if browser, vlc uri if vlc, or error description
     """
+    if not is_dlnable(request):
+        return JsonResponse({"protocol": "", "result": "permission denied"})
     try:
         movie_id = request.POST["id"]
     except KeyError:
         return JsonResponse({"protocol": "", "result": "no json"})
 
     try:
-        movie = Movie.objects.get(id=movie_id)
+        movie = MovieFile.objects.get(id=movie_id)
     except ObjectDoesNotExist:
         return JsonResponse({"protocol": "", "result": "not found"})
     volume, basename = ntpath.split(movie.file)
@@ -314,17 +417,20 @@ def movie_play(request):
     if not renderer.device:
         return JsonResponse({"protocol": "", "result": "no renderer"})
     # DLNA play
-    done, reason = renderer.play_content(content["uri"])
+    done, reason = renderer.play_content(movie, content["uri"])
     if not done:
-        return JsonResponse(
-            {"protocol": "", "result": "failed to play [{}]".format(reason)}
-        )
+        return JsonResponse({"protocol": "", "result": f"failed to play [{reason}]"})
     return JsonResponse({"protocol": "dlna", "result": "done"})
 
 
 def dlna_discover(request):
     """display DNLA discover"""
-    verbosity = int(request.POST.get("verbosity", "1"))
+    if not is_dlnable(request):
+        return JsonResponse({"result": "permission denied"})
+    try:
+        verbosity = int(request.POST.get("verbosity", "2"))
+    except ValueError:
+        verbosity = 2
     mode = request.POST.get("devices", "all")
     timeout = int(request.POST.get("timeout", 2))
 
@@ -333,23 +439,24 @@ def dlna_discover(request):
     sys.stdout = strout = StringIO()
     discover(mode, timeout, verbosity)
     sys.stdout = old_stdout
-    print(strout.getvalue())
 
     return JsonResponse({"result": strout.getvalue()})
 
 
 def dlna_browse(request):
     """display browse directory in mediaserver"""
+    if not is_dlnable(request):
+        return JsonResponse({"result": "permission denied"})
     device = request.POST.get("mediaserver")
     dlna_uri, _ = settings.DLNA_MEDIASERVERS[device.lower()]
     mediaserver = DLNA(device_uri=dlna_uri)
     if not mediaserver.device:
-        return JsonResponse({"code": 1, "result": "no media server"})
+        return JsonResponse({"code": 1, "reason": "no media server"})
 
     directory = request.POST.get("directory", "")
     if directory:
         if not mediaserver.search_directory(0, directory):
-            return JsonResponse({"code": 1, "result": "no path"})
+            return JsonResponse({"code": 1, "reason": "no path"})
 
     subdirs = request.POST.get("subdirs") == "on"
     contents = mediaserver.get_contents(directory, subdirs)
@@ -360,11 +467,13 @@ def dlna_browse(request):
 
 def dlna_check_medias(request):
     """check dlna medias accessibility"""
+    if not is_dlnable(request):
+        return JsonResponse({"result": "permission denied"})
     device = request.POST.get("mediaserver")
     dlna_uri, dlna_path = settings.DLNA_MEDIASERVERS[device.lower()]
     mediaserver = DLNA(device_uri=dlna_uri)
     if not mediaserver.device:
-        return JsonResponse({"code": 1, "result": "no media server"})
+        return JsonResponse({"code": 1, "reason": "no media server"})
     # get all media server contents
     dlna_contents = mediaserver.get_contents(dlna_path, True)
     dlna_titles = {}
@@ -373,7 +482,7 @@ def dlna_check_medias(request):
             dlna_titles[name] = uri
 
     contents = []
-    movies = Movie.objects.filter(file__istartswith=device).order_by("title")
+    movies = MovieFile.objects.filter(file__istartswith=device).order_by("movie__title")
     for movie in movies:
         _, basename = ntpath.split(movie.file)
         basename, _ = ntpath.splitext(basename)
@@ -383,8 +492,7 @@ def dlna_check_medias(request):
             uri = dlna_titles[basename]
         else:
             uri = "NOT FOUND"
-        contents.append((movie.id, movie.title, movie.file, uri))
-        print(movie.title, " --> ", uri)
+        contents.append((movie.id, movie.movie.title, movie.file, uri))
 
     html = render_to_string("movie/inc_table_check_medias.html", {"contents": contents})
     return JsonResponse({"result": html})

@@ -2,13 +2,58 @@
 {% load static %}
 {% load mytags %}
 
-{% block title %} - Settings{% endblock %}
+{% block title %}Settings{% endblock %}
 
 {% block content %}
+
+{% block script %}
+<script type="text/javascript">
+$(document).ready(function() {
+
+    //  submit movies_per_page
+    $('#set_mpp').submit(function(e) {
+      $('#result').html('<p class="bg-info">Be patient ...</p>');
+      e.preventDefault();
+      $.ajax({
+          type: 'POST',
+          url: "{% url 'set_movies_per_page' %}",
+          data: data = getFormData($(this).serializeArray()), 
+          success: function(data) {
+            console.log(data);
+            if (data.result == 'done') {
+              $('#valid_mpp').addClass('bg-success text-white').removeClass('bg-danger');
+              $('#valid_mpp').html(data.result);
+              $('#valid_mpp').show(0).delay(5000).hide(0);
+            }
+            else {
+              $('#valid_mpp').addClass('bg-danger text-white').removeClass('bg-success');
+              $('#valid_mpp').html(data.result);
+              $('#valid_mpp').show(0);
+            }
+     }
+      });
+      return false;   // important: prevent the form from submitting
+  });
+
+
+});
+
+function getFormData(data) {
+   var unindexed_array = data;
+   var indexed_array = {};
+   $.map(unindexed_array, function(n, i) {
+    indexed_array[n['name']] = n['value'];
+   });
+   return indexed_array;
+}
+
+</script>
+{% endblock %}
 
 <h3>Various Settings</h3>
 <br>
 
+{% if playable %}
 <div id="renderer" class="container p-3 my-3 rounded" style="background-color: rgb(220, 230, 250);" >
 <div class="row">
     <h4>TV or decoder to use for video playing</h4>
@@ -20,10 +65,10 @@
         <option value="{{ rend.0 }}" {% if rend.0 == renderer_uri %} selected {% endif %} >{{ rend.1 }}</option>
         {% endfor %}
     </select>
-    <button class="btn btn-outline-secondary my-2 my-sm-0" type="submit" style="background-color: #ccd; border:none">Set TV/Decoder</button>
+    <button class="btn btn-outline-secondary my-2 my-sm-0" type="submit" style="background-color:#c0d0f0; border:none">Set TV/Decoder</button>
 </form>
 </div>
-<br>
+{% endif %}
 
 <div id="hiddenfields" class="container p-3 my-3 rounded" style="background-color: rgb(220, 230, 250)" >
 <form method="GET" action="{% url 'set_hidden_fields' %}">
@@ -49,14 +94,14 @@
     <label class="form-check-label" for="cb3">File</label>
     </div>
   </div>
-</div>
-<div class="row">
   <div class="col">
     <div class="form-check form-check-inline">
     <input class="form-check-input" type="checkbox" id="cb4" name="screen" value="screen" {% if 'screen' in hidden_fields %}checked{% endif %}>
     <label class="form-check-label" for="cb4">Screen Size</label>
     </div>
-  </div>
+  </div></div>
+<div class="row">
+
   <div class="col">
     <div class="form-check form-check-inline">
     <input class="form-check-input" type="checkbox" id="cb5" name="size" value="size" {% if 'size' in hidden_fields %}checked{% endif %}>
@@ -69,21 +114,44 @@
     <label class="form-check-label" for="cb6">Video Format</label>
     </div>
   </div>
+  <div class="col">
+    <div class="form-check form-check-inline">
+    <input class="form-check-input" type="checkbox" id="cb7" name="added" value="added" {% if 'added' in hidden_fields %}checked{% endif %}>
+    <label class="form-check-label" for="cb7">Date Added</label>
+    </div>
+  </div>
+  <div class="col">
+    {% if user.is_superuser %}
+    <div class="form-check form-check-inline">
+    <input class="form-check-input" type="checkbox" id="cb8" name="idmovie" value="idmovie" {% if 'idmovie' in hidden_fields %}checked{% endif %}>
+    <label class="form-check-label" for="cb8">Movie ID</label>
+    </div>
+    {% endif %}
+  </div>
 </div>
-
 
 <div class="row">
     <div class="col">
-        <button class="btn btn-outline-secondary my-2 my-sm-0" type="submit" style="background-color: #ccd; border:none">Set Hidden Fields</button>
+        <button class="btn btn-outline-secondary my-2 my-sm-0" type="submit" style="background-color: #c0d0f0; border:none">Set Hidden Fields</button>
     </div>
 </div>
 </form>
 </div>
 
 
-
-
-
+<div id="movies_per_page" class="container p-3 my-3 rounded" style="background-color: rgb(220, 230, 250);" >
+  <div class="row">
+      <h4>Movies per Page</h4>
+  </div>
+  <form class="form-inline my-2 my-lg-0"  method="GET" id="set_mpp">
+      <label for="mpp">Movies per Page &nbsp;</label>
+      <input class="form-control col-sm-1 mr-sm-3" id="mpp" type="number" name="movies_per_page" value="{{ movies_per_page }}">
+      <input name="csrfmiddlewaretoken" type="hidden" value="{{ csrf_token }}">
+      <button class="btn btn-outline-secondary my-2 my-sm-0" type="submit" style="background-color:#c0d0f0; border:none">Set it</button>
+      <span id="valid_mpp" class="p-1 mb-1" style="margin-left:10px"></span>
+  </form>
+  </div>
+  <br>
 
 
 {% endblock %}

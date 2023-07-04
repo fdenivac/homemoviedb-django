@@ -1,0 +1,40 @@
+Choses à faire avant publication
+
+- DONE- movieparsing : delete maintenance functions
+
+- DONE Warning if USE_NO_USER_PASSWORD:
+    WARNINGS:
+    ?: (axes.W003) You do not have 'axes.backends.AxesStandaloneBackend' or a subclass in your settings.AUTHENTICATION_BACKENDS.
+            HINT: AxesModelBackend was renamed to AxesStandaloneBackend in django-axes version 5.0.
+
+- DONE base.html : restore links on CDN
+
+- DONE supression dans settings (utiliser getenv) :
+    - codes TMDB
+    - codes Mail
+
+- DONE remove "fdenivac.synology" dans mail_newmovies.html, mail_newmovies.txt
+
+- DONE remove "frank" from views.py
+
+- DONE views.test_mailing : suppress reference to explicit user (frank)
+
+- DONE revoir usermail.py (pas de request pour calculer siteloc)
+
+- DONE remove reference to synology
+
+- DONE remove reference to "Diskstation"
+
+- DONE if USE_NO_USER_PASSWORD: plus de code admin
+    -> remove "{% if request.user.is_staff %}"
+
+- DONE suppress some TODO (reste 2)
+
+- rename some values in settings
+
+- Update README
+
+- suppress or do not commit unwanted files
+    - "TODO before publishing.txt"
+
+

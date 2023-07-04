@@ -12,6 +12,12 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 
 import os
 import platform
+import environ  # django-environ
+
+# read the ".env" file in same directory as settings.py
+env = environ.Env()
+environ.Env.read_env()
+
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -21,7 +27,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "r8c8cz*!3ein9xxa*f5$+o26#&j0k@x)(-k=43-nll=x9p!40$"
+SECRET_KEY = env("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -30,9 +36,7 @@ DEBUG = True
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
-    "192.168.1.23",
     "192.168.1.36",
-    "diskstation",
 ]
 
 
@@ -46,6 +50,15 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    #'django-sendfile',                 # package django-sendfile2 (not strictly nessessary)
+    "axes",  # package django-axes
+    "admin_honeypot",  # package django-admin-honeypot
+]
+
+AUTHENTICATION_BACKENDS = [
+    "axes.backends.AxesStandaloneBackend",
+    # Django ModelBackend is the default authentication backend.
+    "django.contrib.auth.backends.ModelBackend",
 ]
 
 MIDDLEWARE = [
@@ -57,6 +70,12 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "global_login_required.GlobalLoginRequiredMiddleware",  # package django-glrm
+    # AxesMiddleware should be the last middleware in the MIDDLEWARE list.
+    # It only formats user lockout messages and renders Axes lockout responses
+    # on failed user authentication attempts from login views.
+    # If you do not want Axes to override the authentication response
+    # you can skip installing the middleware and use your own views.
+    "axes.middleware.AxesMiddleware",
 ]
 
 ROOT_URLCONF = "moviedb.urls"
@@ -90,6 +109,9 @@ DATABASES = {
     }
 }
 
+# set default autofield when no primary_key declared in models
+DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
+
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
@@ -108,6 +130,18 @@ AUTH_PASSWORD_VALIDATORS = [
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
+
+
+# Mailing config
+# https://docs.djangoproject.com/en/3.0/ref/settings/#
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = env("EMAIL_HOST")
+EMAIL_USE_TLS = env("EMAIL_USE_TLS")
+EMAIL_PORT = env("EMAIL_PORT")
+EMAIL_HOST_USER = env("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 
 # Internationalization
@@ -130,9 +164,9 @@ else:
     # (windows)
     LOCALE = "fr"
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/3.0/howto/static-files/
+# "override" the django variable SHORT_DATE_FORMAT via template tag 'shortdate' (in movie.templatetags.mytags)
+# if MY_SHORT_DATE_FORMAT is not defined, the standard localized 'SHORT_DATE_FORMAT' is used
+MY_SHORT_DATE_FORMAT = "d/m/Y"
 
 
 # Static files (CSS, JavaScript, Images)
@@ -154,29 +188,45 @@ MEDIA_URL = "/media/"
 # Config Django Global Login Required Middleware (django-glrm)
 #
 PUBLIC_PATHS = [
-    "^%s.*" % MEDIA_URL,  # allow public access to any media on your application
+    f"^{MEDIA_URL}.*",  # allow public access to any media on your application
     r"^/accounts/.*",  # allow public access to all django-allauth views
 ]
+
+
+#
+# Config Axes middleware
+#
+AXES_ENABLED = True
+AXES_FAILURE_LIMIT = 3
+AXES_LOCK_OUT_AT_FAILURE = True
+AXES_COOLOFF_TIME = 1
+AXES_LOCK_OUT_BY_COMBINATION_USER_AND_IP = True
 
 
 #
 #  Specific settings for this application outside django
 #
 
+# TMDb API
+TMDB_API_KEY = env("TMDB_API_KEY")
+TMDB_API_LANG = "fr"
+
 LOGIN_REDIRECT_URL = "home"
 
 # Do not use password for login standard users (no admin nor staff)
-USE_NO_USER_PASSWORD = True
-
+USE_NO_USER_PASSWORD = False
 if USE_NO_USER_PASSWORD:
     # specific athentification backend for login without password
     AUTHENTICATION_BACKENDS = ["movie.authentication.NopassAuthBackend"]
+    INSTALLED_APPS.remove("axes")
+    MIDDLEWARE.remove("axes.middleware.AxesMiddleware")
+    MIDDLEWARE.remove("global_login_required.GlobalLoginRequiredMiddleware")
 
 # no session expiration before 100 years !
 SESSION_COOKIE_AGE = 3600 * 24 * 365 * 100
 
 # number of movies per html page
-MOVIES_PER_PAGE = 25
+MOVIES_PER_PAGE = 15
 
 # number in the top pages (top actors, top composers, ...)
 NUM_TOP = 100
@@ -197,17 +247,43 @@ VOLUMES = [
     ),
     ("Expansion", "Expansion", "harddisk", (None, None)),
 ]
+
+# MAIN_VOLUME is the main media server (index page use references to this volume)
+MAIN_VOLUME = VOLUMES[2]
+
 DLNA_MEDIASERVERS = {vol[0].lower(): vol[3] for vol in VOLUMES}
 
+# list of DLNA renderers in your home
 DLNA_RENDERERS = [
     # for each device :
     #   (DLNA Device location, a smart name)
-    ("http://192.168.1.14:42300/description.xml", "Orange Decoder"),
+    ("http://192.168.1.16:42300/description.xml", "Orange Decoder"),
     ("http://192.168.1.15:52235/dmr/SamsungMRDesc.xml", "TV Samsung"),
     # specific name for view on computer :
     ("browser", "View in Browser"),
     ("vlc", "View in VLC"),
 ]
+
+# client network for accessing to DLNA commands
+DLNA_NETWORK = "192.168.1.0/24"
+
+
+#
+# configure django-sendfile2 (for video/subtitle download from site)
+#
+if platform.system() == "Linux":
+    # site in production on synology
+    SENDFILE_BACKEND = "django_sendfile.backends.nginx"
+    SENDFILE_ROOT = "/var/services/video"
+    SENDFILE_URL = "/video"
+else:
+    # for development
+    SENDFILE_BACKEND = "django_sendfile.backends.simple"
+    SENDFILE_ROOT = "\\\\DiskStation\\video"
+
+# video filenames (from db) starting with this pattern are downloadable :
+# remove this part from filename for get the download path for django-sendfile with backen nginx
+DOWNLOADABLE_PATTERN = "DiskStation:\\video\\"
 
 # default hidden fields for movies table (in 'poster, 'screen', 'size', 'file', 'rate', 'format)
 HIDDEN_FIELDS = ["size", "file", "format"]

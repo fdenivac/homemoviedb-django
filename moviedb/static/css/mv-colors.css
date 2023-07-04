@@ -1,0 +1,46 @@
+/*
+CSS colors for movie app
+*/
+.body-color {
+    background-color: #f8f8ff;
+}
+
+.mynavbar-color {
+    background-color: #e3f2fc;
+    border: none;
+}
+
+.mynavbar-collapse-color {
+    /* background-color: #daeaf5; */
+    background-color: #e3f2fc;
+    /* border: 1px dotted black; */
+}
+
+/* .content-color {
+    background-color: red;
+} */
+
+
+.btn-color {
+    color: black;
+    background-color: #bed7ee;
+}
+
+.btn-color:hover {
+    color: white;
+    background-color: #a0c5e7;
+}
+
+/* .btn.active-color {
+    background-color: #666;
+} */
+
+/* color header title */
+.header-color {
+    background-color: #d0e0ef;
+}
+
+/* color section */
+.section-color {
+    background-color: #b9d3eb;
+}

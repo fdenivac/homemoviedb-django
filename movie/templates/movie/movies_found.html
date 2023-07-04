@@ -2,7 +2,7 @@
 {% load static %}
 {% load mytags %}
 
-{% block title %} - Movies{% endblock %}
+{% block title %}Movies{% endblock %}
 
 
 {% block content %}
@@ -15,11 +15,12 @@
 </style>
 
 
-    <h2>{{ table_type }}</h2>
-    <div id="movies">
-    {% include "movie/inc_tablemovies.html" %}
-    </div>
-    {% include "movie/inc_pagination.html" %}
+<h2 class="header-color"> {{ table_type }}</h2>
+
+<div id="movies">
+{% include "movie/inc_tablemovies.html" %}
+</div>
+{% include "movie/inc_pagination.html" %}
     
 {% endblock %}
 

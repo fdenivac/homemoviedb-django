@@ -21,9 +21,21 @@ Tested environment :
 ## Install
 
 - install python dependencies
-    pip install -r requirements.txt
+
+        pip install -r requirements.txt
 
 - install ffmpeg, and add bin folder to the system path
+
+- prepare ".env" file for storing secret informations used by settings.py. This file, in same directory as settings.py must define :
+
+        SECRET_KEY : the django secret key. Can be created via : python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())")
+        EMAIL_HOST
+        EMAIL_USE_TLS
+        EMAIL_PORT
+        EMAIL_HOST_USER
+        EMAIL_HOST_PASSWORD
+        TMDB_API_KEY : your TMDb API Key (see https://www.themoviedb.org/settings/api)
+
 
 - configure settings.py :
     

@@ -1,10 +1,10 @@
 {
-    "python.linting.pylintEnabled": true,
-    "python.linting.enabled": true,
-    "python.linting.pylintArgs": [
-		"--load-plugins=pylint_django",
-        "--extension-pkg-whitelist=win32api",
-		"--disable=line-too-long,bad-continuation,too-many-lines",
-    ]
-	
+  "python.linting.pylintEnabled": true,
+  "python.linting.enabled": true,
+  "python.linting.pylintArgs": [
+    "--load-plugins=pylint_django",
+    "--django-settings-module=moviedb.settings",
+    "--extension-pkg-whitelist=win32api",
+    "--disable=line-too-long,too-many-lines",
+  ]
 }

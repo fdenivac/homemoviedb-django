@@ -1,0 +1,65 @@
+{% load static %}
+{% load mytags %}
+
+<style>
+body {
+    background-color: #f1f1f1;
+    padding: 20px;
+    font-family: Arial;
+  }
+a {
+    background-color: #ddd;
+    text-decoration: none;
+    color: black
+}
+a:hover {
+    background-color:white;
+}
+.p1 {
+    margin-top:0.5em;
+    margin-left:25px;
+    margin-right:20%;
+    margin-bottom:0px;
+    text-align: justify;
+
+}
+.pn {
+    margin-bottom:1em;
+} 
+</style>
+
+Hi {{ user }},
+<br>
+<br>
+This is an automatic mail from your <b>Home Movie Catalog</b>.
+<br>
+<br>
+{% if days == 7 %}This week{% else %}These last {{ days }} days{% endif %},
+{% if movies|length == 1 %} a new movie is available{% else %}{{ movies|length }} new movies are available{% endif %}{% if movies|length == 0 %}.{% else %}:{% endif %}
+
+<ul>
+{% for movie in movies %}
+<li>
+"<a href="{{ siteloc}}{% url 'movie_details' movie.id %}">{{ movie.movie.title }}</a>" of {{ movie.movie.team|director }}, released in {{ movie.movie.release_year }}, duration {{ movie.duration |sectoduration }}
+    <p class="p1">
+        <u>Genre(s):</u> : {{ movie.movie.genres }}
+    </p>
+    <p class="p1">
+        <u>Overview:</u> : {{ movie.movie.overview }}
+    </p>
+    <p class="p1">
+        <u>Countries of Production: </u>{{ movie.movie.countries|isocountries }} ,  <u>Language spoken: </u> {{movie.movie.language|isolanguage }}
+    </p>
+    <p class="p1 pn">
+        <u>Technical infos</u> : screen: {{ movie.screen_size }}, {{ movie.movie_format}}
+    </p>
+</li>
+{% endfor %}
+</ul>
+
+For complete details, go to the <a href="{{ siteloc}}/searchmovies/?vol={{mainvolume.0}}&query=&order=-date_added">Movies List ordered by added date</a>
+<br>
+<br>
+Bye, have a nice week,
+<br>{{ user }} the webmaster
+
