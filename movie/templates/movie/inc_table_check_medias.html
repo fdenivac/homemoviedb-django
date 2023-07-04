@@ -4,6 +4,7 @@
         <thead class="thead-light" data-file-width="5px">
             <tr>
                 <th scope="col" class="col-2 text-center">Movie title</th>
+                <th scope="col" class="col-1">DB ID</th>
                 <th scope="col" class="col-3 text-center">filename</th>
                 <th scope="col" class="col-3 text-center">DLNA URI</th>
             </tr>
@@ -11,6 +12,7 @@
         {% for id, title, filename, uri in contents %}
         <tr>
             <td><a href="{% url 'movie_details' id %}">{{ title }}</a></td>
+            <td>{{ id }}</td>
             <td>{{ filename }}</td>
             <td {% if uri == 'NOT FOUND' %} class="bg-danger"{% endif%}>{{ uri }}</td>
         </tr>

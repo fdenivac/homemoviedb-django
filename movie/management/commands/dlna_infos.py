@@ -23,10 +23,6 @@ class Command(BaseCommand):
     help = "List available DLNA devices, list media contents."
 
     def add_arguments(self, parser):
-        # subparsers = parser.add_subparsers(title="DevicesList",
-        #                                    dest="subcommand",
-        #                                    required=True)
-
         parser.add_argument(
             "--discover", action="store_true", help="discover DLNA equipments"
         )
@@ -44,7 +40,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--contents",
             default=None,
-            help="show contents in DEVICENAME:PATH (ex: --contents=http://192.168.1.3:50001/desc/device.xml;Vidéo/Films",
+            help='show contents in DEVICENAME:PATH (ex: --contents="http://192.168.1.3:50001/desc/device.xml;Vidéo/Films")',
         )
 
     def handle(self, *args, **options):
@@ -84,22 +80,18 @@ class Command(BaseCommand):
             try:
                 dev_uri, content_path = options["contents"].split(";")
             except ValueError:
-                print('ERROR: invalid "--contents" argument')
+                sys.exit('ERROR: invalid "--contents" argument')
             device = DLNA(device_uri=dev_uri)
             if not device.device:
-                sys.exit('ERROR: Device not found for "{}"'.format(dev_uri))
+                sys.exit(f'ERROR: Device not found for "{dev_uri}"')
             contents = sorted(
                 device.get_contents(content_path, True), key=lambda x: x[0]
             )
             print(
-                '{} contents in "{}" for device "{}" : '.format(
-                    len(contents), content_path, device.device.friendly_name
-                )
+                f'{len(contents)} contents in "{content_path}" for device "{device.device.friendly_name}" : '
             )
-            for rootdir, dirs, components in contents:
+            for rootdir, _, components in contents:
                 for name, uri in components:
-                    print("{}  {}  {}".format(rootdir, name, uri))
-                for _dir in dirs:
-                    print("{}".format(_dir))
+                    print(f"{rootdir}  {name}  {uri}")
 
         return None

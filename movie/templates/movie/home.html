@@ -2,57 +2,99 @@
 {% load static %}
 {% load mytags %}
 
-{% block title %} - Index{% endblock %}
+{% block title %}Index{% endblock %}
 
 {% block content %}
-<head>
- <style>
- </style>
-</head>
 
-<h3>Quick Access</h3>
+
+<h2 class="section-color">Some Statistics</h2>
+  <p style="margin-left:1em;">
+  {{nbmovies}} Movies described, <a href="{% url 'searchbypath' vol_label '' 'movie__title' %}">{{nbfiles}} Movies files</a>, {{nbpeople}} persons (in {{nbteams}} team entries),  {{nbposter}} posters
+  <br>
+  Files size by volume : 
+  {% for vol_label, vol_alias, count in counts%}
+  <b>{{vol_alias}}</b> : {{count.1|smartunit:'B'}}{% if forloop.last%}.{%else%},{%endif%}
+  {%endfor%}
+  {% if request.user.is_staff %}
+  <br>
+  Versions : <b>OS</b>:{{versions.0}}, <b>Python</b>: {{versions.1}}, <b>Django</b>: {{versions.2}}
+  {%endif%}
+</p>
+
+<h2 class="section-color">Quick Access to Movies</h2>
+
+{% for vol_label, vol_alias, count in counts%}
+  {% if forloop.first%}T{%else%}t{%endif%}he <a href="{% url 'searchbypath' vol_label '' 'movie__title' %}">{{count.0}} movies</a> on <b>{{vol_alias}}</b>{% if forloop.last%}.{%else%},{%endif%}
+{%endfor%}
 <br>
-Movies never <b>viewed</b> on "Synology" ordered by <a href="{% url 'noviewed' 'Diskstation' 'title' %}">Title</a>, <a href="{% url 'noviewed' 'Diskstation' '-release_year' %}">Year</a><br>
-Movies never <b>viewed</b> by <b>genre</b> on "Synology" ordered by <a href="{% url 'noviewedgenres' 'Diskstation' 'title' %}">Title</a>, <a href="{% url 'noviewedgenres' 'Diskstation' '-release_year' %}">Year</a><br>
-Movies <b>available</b> on "Synology" ordered by <a href="{% url 'searchbypath' 'Diskstation' '' 'title' %}">Title</a>, <a href="{% url 'searchbypath' 'Diskstation' '' '-release_year' %}">Year</a><br>
-Movies <b>stored</b> on disk "Expansion" ordered by <a href="{% url 'searchbypath' 'Expansion' '' 'title' %}">Title</a>, <a href="{% url 'searchbypath' 'Expansion' '' '-release_year' %}">Year</a><br>
-Movies <b>already viewed</b> on "Synology" ordered by <a href="{% url 'viewed' 'Diskstation' 'title' %}">Title</a>, <a href="{% url 'viewed' 'Diskstation' '-release_year' %}">Year</a>, <a href="{% url 'viewed' 'Diskstation' '-rate' %}">Rate</a><br>
-<b>All</b> Movies ordered by <a href="{% url 'searchbypath' '' '' 'title' %}">Title</a>, <a href="{% url 'searchbypath' '' '' '-release_year' %}">Year</a>, <a href="{% url 'searchbypath' '' '' '-rate' %}">Rate</a><br>
+Movies <b>never viewed</b> on "{{mainvolume.1}}" ordered by <a href="{% url 'noviewed' mainvolume.0 'movie__title' %}">Title</a>, <a href="{% url 'noviewed' mainvolume.0 '-movie__release_year' %}">Year</a>, <a href="{% url 'noviewed' mainvolume.0 '-date_added' %}">Last added</a><br>
+Movies <b>never viewed</b> by <b>genre</b> on "{{mainvolume.1}}" ordered by <a href="{% url 'noviewedgenres' mainvolume.0 'movie__title' %}">Title</a>, <a href="{% url 'noviewedgenres' mainvolume.0 '-movie__release_year' %}">Year</a><br>
+Movies <b>available</b> on "{{mainvolume.1}}" ordered by <a href="{% url 'searchbypath' mainvolume.0 '' 'movie__title' %}">Title</a>, <a href="{% url 'searchbypath' mainvolume.0 '' '-movie__release_year' %}">Year</a>, <a href="{% url 'searchbypath' mainvolume.0 '' '-date_added' %}">Last added</a><br>
+Movies <b>already viewed</b> on "{{mainvolume.1}}" ordered by <a href="{% url 'viewed' mainvolume.0 'movie__title' %}">Title</a>, <a href="{% url 'viewed' mainvolume.0 '-movie__release_year' %}">Year</a>, <a href="{% url 'viewed' mainvolume.0 '-rate' %}">Rate</a>, <a href="{% url 'viewed' mainvolume.0 '-date_added' %}">Last added</a><br>
+<b>All</b> Movies ordered by <a href="{% url 'searchbypath' '' '' 'movie__title' %}">Title</a>, <a href="{% url 'searchbypath' '' '' '-movie__release_year' %}">Year</a>, <a href="{% url 'searchbypath' '' '' '-rate' %}">Rate</a>, <a href="{% url 'searchbypath' '' '' '-date_added' %}">Last added</a><br>
 <b>Top</b> pages : <a href="{% url 'persons_most_credited' 'Actor' %}">Top {{ top }} of Actors</a>, 
 <a href="{% url 'persons_most_credited' 'Director' %}">Top {{ top }} of Directors</a>,
 <a href="{% url 'persons_most_credited' 'Director of Photography' %}">Top {{ top }} of Directors of Photography</a>,
 <a href="{% url 'persons_most_credited' 'Writer' %}">Top {{ top }} of Movie Writers</a>,
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 <a href="{% url 'persons_most_credited' 'Novel' %}">Top {{ top }} of Novelists</a>,
 <a href="{% url 'persons_most_credited' 'Music' %}">Top {{ top }} of Composers</a>,
 <a href="{% url 'persons_most_credited' 'Musician' %}">Top {{ top }} of Musicians</a><br>
-Count of Movies by <b>genre</b> ordered by <a href="{% url 'genres' 'title' %}">Title</a>, <a href="{% url 'genres' '-release_year' %}">Year</a>, <a href="{% url 'genres' '-rate' %}">Rate</a><br>
+Movies <b>Count by genre</b> ordered by <a href="{% url 'genres' 'movie__title' %}">Title</a>, <a href="{% url 'genres' '-movie__release_year' %}">Year</a>, <a href="{% url 'genres' '-rate' %}">Rate</a><br>
+Movies <b>Count by country</b> ordered by <a href="{% url 'countries' 'movie__title' %}">Title</a>, <a href="{% url 'countries' '-movie__release_year' %}">Year</a>, <a href="{% url 'countries' '-rate' %}">Rate</a><br>
+Movies <a href="{% url 'movies_count_by_resolution' %}">Count by <b>screen resolution</b><a/><br><br>
 
 <form class="form-inline my-2 my-lg-0" method="GET" action="{% url 'searchmoviesbyjobperson' %}">
     <label>Movies with&nbsp;<b>people</b>&nbsp;in a&nbsp;<b>job</b> &nbsp; </label>
     <input class="form-control mr-sm-2" type="text" name="name" value="" placeholder="Nom ..." aria-label="SearchVN">
-    <input class="form-control mr-sm-2" type="text" name="job" value="" placeholder="Job ..." aria-label="SearchVJ">
-    <button class="btn btn-outline-secondary my-2 my-sm-0" type="submit" style = "background-color: #d8ebfc; border:none">Search</button>
+    <select class="form-control mr-sm-2"  name="job">
+        {% for job in jobs %}
+        <option value="{{ job }}" {% if job == "<All Jobs>" %} selected {% endif %} > {{ job }}  </option>
+        {% endfor %}
+      </select>    
+    <button class="btn btn-color btn-outline-secondary my-2 my-sm-0" type="submit">Search</button>
 </form>
 
 <form class="form-inline my-2 my-lg-0" method="GET" action="{% url 'searchpeople' %}">
     <label>Search for&nbsp;<b>people</b> &nbsp; </label>
     <input class="form-control mr-sm-2" type="text" name="name" value="" placeholder="Nom ..." aria-label="SearchVN">
-    <input class="form-control mr-sm-2" type="text" name="job" value="" placeholder="Job ..." aria-label="SearchVJ">
-    <button class="btn btn-outline-secondary my-2 my-sm-0" type="submit" style = "background-color: #d8ebfc; border:none">Search</button>
+    <select class="form-control mr-sm-2"  name="job" aria-label="">
+        {% for job in jobs %}
+        <option value="{{ job }}" {% if job == "<All Jobs>" %} selected {% endif %} > {{ job }}  </option>
+        {% endfor %}
+      </select>
+    <button class="btn btn-color btn-outline-secondary my-2 my-sm-0" type="submit">Search</button>
 </form>
 
+<form class="form-inline my-2 my-lg-0" method="GET" action="{% url 'searchcountries' %}">
+    <label>Search by production &nbsp;<b>country</b>&nbsp; </label>
+    <select class="form-control mr-sm-2"  name="countries" aria-label="vol">
+        {% for country in countries %}
+        <option value="{{ country.0 }}" >{{ country.1 }}</option>
+        {% endfor %}
+    </select>
+    <button class="btn btn-color btn-outline-secondary my-2 my-sm-0" type="submit">Search</button>
+</form>
+<form class="form-inline my-2 my-lg-0" method="GET" action="{% url 'searchlanguage' %}">
+    <label>Search by original &nbsp;<b>language</b>&nbsp;</label>
+    <select class="form-control mr-sm-2"  name="language" aria-label="vol">
+        {% for lang in languages %}
+        <option value="{{ lang.0 }}" >{{ lang.1 }}</option>
+        {% endfor %}
+    </select>
+    <button class="btn btn-color btn-outline-secondary my-2 my-sm-0" type="submit">Search</button>
+</form>
 <br>
-<a href="{% url 'advanced_search' %}">Advanced Search</a><br>
-<a href="{% url 'dlna_tools' %}">Some tools around DLNA</a><br>
-<a href="{% url 'options' %}">The settings</a> (video viewer and hidden fields)
-<br><br>
-For movies management :
+{% comment %} {% if request.user.is_staff %} {% endcomment %}
+<h2 class="section-color">Movies Management</h2>
 <ul>
-<li><a href="{% url 'duplicated' %}">Movies Duplicated</a></li>
-<li><a href="{% url 'missing' %}">Movies Missing</a></li>
-<li><a href="{% url 'noposter' %}">Movies without Poster</a></li>
+  <li><a href="{% url 'test_mailing' 7 %}">Test Mailing</a> for new movies since 7 days</li>
+  <li><a href="{% url 'duplicated' %}">Movies Duplicated</a></li>
+  <li><a href="{% url 'missing' %}">Movies Missing</a></li>
+  <li><a href="{% url 'noposter' %}">Movies without Poster</a></li>
+  <li><a href="{% url 'orphan' %}">Orphan Movies</a> (no movie files using it)</li>
 </ul>
+{% comment %} {% endif %} {% endcomment %}
 
 {% endblock %}
 

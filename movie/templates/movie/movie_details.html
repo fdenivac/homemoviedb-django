@@ -2,7 +2,7 @@
 {% load static %}
 {% load mytags %}
 
-{% block title %} - Movie Details{% endblock %}
+{% block title %}Movie Details [{{ movie.id }}]{% endblock %}
 
 
 
@@ -44,81 +44,83 @@ $(document).ready(function() {
 
 {% block content %}
 
-<style>
-.navicon:hover {
-    transform: scale(1.5);
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-}
-video {
-    margin-left: auto;
-    margin-right: auto;
-    display: block;
-    margin-bottom: 2em;
-}
-</style>
-<div style="margin-top:8px;">
-    <div id="video"></div>
+<div id="video"></div>
 
-    <table class="table">
-      <tr style="background-color:#d0e0ef;">
-        <td class="align-middle" style="width:90%; font-family:arial; font-size:30px;"> {{ movie.title }}</td>
-        <td >{% if playable %}<img id="playmovie" class="navicon" src="{% static 'playmovie.png' %}" width="40px" height="40px"/>&nbsp;<span id="result"></span>{% endif %}</td>
-        <td><a href="https://www.themoviedb.org/movie/{{ movie.id_tmdb }}?language=fr"><img id="tmdb" class="navicon" src="{% static 'tmdb.png' %}" width="40px" height="40px"/></a></td>
-      <tr>
-    </table>
-
-    <table id="tableposters" class="table table-sm " data-sortable="false">  
-      <tr>
-        {% comment %} INFO: use xx.all for get queryset from foreign key related  {% endcomment %}
-        {% for poster in movie.poster.all %}
-        <td class="col-md-2"> <img src="{{ poster.poster.url }}" height="300px">
-        {% if user.is_superuser %}
-        <form method="GET" action="{% url 'removeposter' %}"><input type="text" name="idposter" value="{{ poster.id }}" hidden /><button type="submit" style="background-color: #d8ebfc; border:none">Remove</button></form> </td>
-        {% endif %}
-        {% endfor %}
-     </tr>
-    </table>
-
-    <table id="tabledetails" class="table table-sm table-bordered" data-sortable="false">
-      <tr> <td> Original Title </td> <td> {{ movie.original_title }} </td> </tr>
-      <tr> <td> Release Year</td> <td> {{ movie.release_year }} </td> </tr>
-      <tr> <td> Director</td> <td> {{ movie|director }} </td> </tr>
-      <tr> <td> Genres</td> <td> {{ movie.genres }} </td> </tr>
-      <tr> <td> Synopsys </td> <td style="word-wrap: break-word; white-space: normal"> {{ movie.overview }} </td> </tr>
-      <tr> <td> File </td> <td> {{ movie.file }} </td> </tr>
-      <tr> <td> File Size </td> <td> {{ movie.file_size|smartsize }} </td> </tr>
-      <tr> <td> File Status </td> <td> {{ movie.file_status }} </td> </tr>
-      <tr> <td> Video Format</td> <td> {{ movie.movie_format }} </td> </tr>
-      <tr> <td> Video Size</td> <td> {{ movie.screen_size }} </td> </tr>
-      <form method="GET" action="{% url 'setdetails' %}">
-      <tr> <td><input type="text" name="idmovie" hidden value="{{ movie.id }}" /><label for="views">Num views&nbsp;</label></td><td><input type="text" name="viewed" id="views" value="{{ movie.viewed }}" /></td></tr>
-      <tr> <td><label for="rate">Rate&nbsp;</label></td><td><input type="text" name="rate" id="rate" value="{{ movie.rate }}" /></td></tr>
-      <tr> <td><button type="submit" style="background-color: #d8ebfc; border:none">Modify</button></td></tr>
-      </tr></form>
-    </table>
-
-
-
-    <h3>Crédits</h3>
-    <div class="col-auto">
-
-    <table id="tablecredits" class="table table-sm table-striped" data-toggle="table" data-sortable="true">
-        <thead class="thead-dark" >
-            <tr>
-                <th data-field="job" data-sortable="true" data-width="20" data-width-unit="%">Job</th>
-                <th data-field="name" data-sortable="true" data-width="40" data-width-unit="%">Name</th>
-                <th data-field="char" data-sortable="true" data-width="40" data-width-unit="%">Character</th>
-            </tr>
-        </thead>
-        {% comment %} INFO: use xx.all for get queryset from foreign key related  {% endcomment %}
-        {% for person in movie.team.all %}
+<table class="table header-color">
+    <tr>
+        <td class="align-left header-size"> {{ movie.movie.title }}</td>
+        <td >{% if downloadable %}<a href="{% url 'movie_download' movie.id %}"><img id="download" class="navicon" src="{% static 'download.png' %}" width="40px" height="40px"/></a>{% endif %}</td>
+        {% if subtitle %}<td ><a href="{% url 'subtitle_download' movie.id %}" download><img id="subtitles" class="navicon" src="{% static 'subtitles.png' %}" width="40px" height="40px"/></a></td>{% endif %}
+        <td >{% if playable %}<img id="playmovie" class="navicon" src="{% static 'playmovie.png' %}" width="40px" height="40px"/><span id="result"></span>{% endif %}</td>
+        <td><a href="https://www.themoviedb.org/movie/{{ movie.movie.id_tmdb }}?language=fr"><img id="tmdb" class="navicon" src="{% static 'tmdb.png' %}" width="40px" height="40px"/></a></td>
         <tr>
-            <td> {{ person.job }} </td>
-            <td> <a href="{% url 'movies_jobperson' '' person.name %}"> {{ person.name }}</a> </td>
-            <td> {% if person.extension %} {{ person.extension }}  {% endif %} </td>
+</table>
+
+<table id="tableposters" class="table table-sm " data-sortable="false">  
+    <tr>
+    {% comment %} INFO: use xx.all for get queryset from foreign key related  {% endcomment %}
+    {% for poster in movie.movie.poster.all %}
+    <td class="col-md-2"> <a data-fancybox href="{{ poster.poster.url }}"><img src="{{ poster.poster.url }}" height="200px"></a>
+    {% if user.is_superuser %}
+    <form method="GET" action="{% url 'removeposter' %}"><input type="text" name="idposter" value="{{ poster.id }}" hidden /><button class="btn-color" type="submit">Remove</button></form> </td>
+    {% endif %}
+    {% endfor %}
+    </tr>
+</table>
+
+<table id="tabledetails" class="table table-sm table-bordered" data-sortable="false">
+    <tr> <td class="hcol"> Original Title </td> <td> {{ movie.movie.original_title }} </td> </tr>
+    <tr> <td class="hcol"> Release Year</td> <td> {{ movie.movie.release_year }} </td> </tr>
+    <tr> <td class="hcol"> Director</td> <td> {{ movie.movie.team|director }} </td> </tr>
+    <tr> <td class="hcol"> Genres</td> <td> {{ movie.movie.genres }} </td> </tr>
+    <tr> <td class="hcol"> Duration</td> <td> {{ movie.duration|sectoduration }} </td> </tr>
+    <tr> <td class="hcol"> Synopsys </td> <td class="cell-text"> {{ movie.movie.overview }} </td> </tr>
+    <tr> <td class="hcol"> Countries </td> <td> <b>Production:</b> {{ movie.movie.countries|isocountries }} - <b>Language:</b> {{ movie.movie.language|isolanguage }} </td></tr>
+    <tr> <td class="hcol"> File </td> <td> {{ movie.file }} </td> </tr>
+    {% if user.is_superuser %}<tr> <td class="hcol"> IDs </td> <td> <b>database:</b> {{ movie.id }} - <b>tmdb:</b> {{ movie.movie.id_tmdb }} </td> </tr>{% endif %}
+    <tr> <td class="hcol"> File Size </td> <td> {{ movie.file_size|smartunit:'B' }} </td> </tr>
+    <tr> <td class="hcol"> File Status </td> <td> {{ movie.file_status }} - {% if downloadable %}Online{% else %}Offline{% endif %}</td> </tr>
+    <tr> <td class="hcol"> Video Format</td> <td> {{ movie.movie_format }} </td> </tr>
+    <tr> <td class="hcol"> Video Size</td> <td> {{ movie.screen_size }} </td> </tr>
+    <tr> <td class="hcol"> Video Rate</td> <td> {{ movie.bitrate|smartunit:'bps' }} </td> </tr>
+    <tr> <td class="hcol"> Date added</td> <td> {{ movie.date_added|shortdate }} </td> </tr>
+</table>
+<table  class="table table-sm table-bordered">
+    <form method="GET" action="{% url 'setdetails' %}">
+        <tr>
+            <td class="hcol"><input type="text" name="idmovie" hidden value="{{ movie.movie.id }}" /><label for="views">Num views&nbsp;</label></td><td><input type="text" name="viewed" id="views" value="{{ notes_user.viewed }}" /></td>
+            <td class="hcol"><label for="rate">Rate&nbsp;</label></td><td><input type="text" name="rate" id="rate" value="{{ notes_user.rate }}" /></td>
+            <td><button class="btn-color" type="submit">Modify</button></td>
         </tr>
-        {% endfor %}
-    </table>
-    </div>
-<div>
+    </form>
+</table>
+
+<br>
+<h3>Crédits</h3>
+<div class="col-auto">
+
+<table id="tablecredits" class="table table-sm table-striped" data-toggle="table" data-sortable="true">
+    <thead class="thead-dark" >
+        <tr>
+            <th data-field="job" data-sortable="true" data-width="20" data-width-unit="%">Job</th>
+            <th data-field="cast" data-sortable="true" data-width="3" data-width-unit="rem" data-toggle="tooltip" data-placement="top" title="Cast Order">C</th>
+            <th data-field="thumb" data-sortable="false"></th>
+            <th data-field="name" data-sortable="true" data-width="40" data-width-unit="%">Name</th>
+            <th data-field="char" data-sortable="true" data-width="40" data-width-unit="%">Character</th>
+        </tr>
+    </thead>
+    {% comment %} INFO: use xx.all for get queryset from foreign key related  {% endcomment %}
+    {% comment %} {% for person in movie.movie.team.all %} {% endcomment %}
+    {% for person in movie.movie|team_ordered %}
+    <tr>
+        <td> {{ person.job.name }} </td>
+        <td> {{person.cast_order|notnone}} </td>
+        <td> {% if person.person.url_img %} <a data-fancybox href="{{ person.person.url_img|tmdb_url }}"><img src="{{ person.person.url_img|tmdb_url }}" height="50px"></a>{% endif %}</td>
+        <td> <a href="{% url 'movies_jobperson' '' person.person.name %}"> {{ person.person.name }}</a> </td>
+        <td> {% if person.extension %} {{ person.extension }}  {% endif %} </td>
+    </tr>
+    {% endfor %}
+</table>
+</div>
+
 {% endblock %}

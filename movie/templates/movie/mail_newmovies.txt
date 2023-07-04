@@ -1,0 +1,14 @@
+{% load static %}{% load mytags %}
+Hi {{ user }},
+
+{% if days == 7 %}This week{% else %}These last {{ days }} days{% endif %}, {% if movies|length == 1 %}a new movie is available{% else %}{{ movies|length }} new movies are available{% endif %}{% if movies|length == 0 %}.{% else %}:{% endif %}
+
+{% for movie in movies %} - "{{ movie.movie.title }}" of {{ movie.movie.team|director }}, released in {{ movie.movie.release_year }}, produced in {{ movie.movie.countries|isocountries }}, language {{movie.movie.language|isolanguage }}, duration {{ movie.duration |sectoduration }} (screen: {{ movie.screen_size }}, {{ movie.movie_format}})
+{{ movie.overview|textwrap:'120,6' }}
+{% endfor %}
+
+For details, go to {{siteloc }}/searchmovies/?vol={{mainvolume.0}}&query=&order=-date_added
+
+
+Bye, have a nice week,
+{{user}} the webmaster

@@ -2,7 +2,7 @@
 {% load static %}
 {% load mytags %}
 
-{% block title %} - Advanced Search{% endblock %}
+{% block title %}Advanced Search{% endblock %}
 
 {% block content %}
 
@@ -19,21 +19,22 @@
       <input class="form-control mr-sm-2" id="ssearch" type="text" name="query" value="{{ query }}" placeholder="Search..." aria-label="Search">
     </div>
     <div class="col">
-      <label class="form-check-label" for="sorder">Order by</label>
-      <select class="form-control mr-sm-2" id="sorder" name="order" aria-label="order">
-        <option {% if order == 'title' %} selected {% endif %} value="title">Title</option>
-        <option {% if order == '-release_year' %} selected {% endif %} value="-release_year">Year</option>
-        <option {% if order == '-rate' %} selected {% endif %} value="-rate">Rate</option>
-        <option {% if order == '-file_size' %} selected {% endif %} value="-file_size">Size</option>
-        <option {% if order == 'duration' %} selected {% endif %}value="duration">Duration</option>
-      </select>
-    </div>
-    <div class="col">
       <label class="form-check-label" for="svol">Volume &nbsp;</label>
       <select class="form-control mr-sm-2" id="svol" name="vol" aria-label="vol">
         {% for vol in volumes %}
         <option value="{{ vol.0 }}" {% if vol.0 == volume %} selected {% endif %} >{{ vol.1 }}</option>
         {% endfor %}
+      </select>
+    </div>
+    <div class="col">
+      <label class="form-check-label" for="sorder">Order by</label>
+      <select class="form-control mr-sm-2" id="sorder" name="order" aria-label="order">
+        <option {% if order == 'movie__title' %} selected {% endif %} value="movie__title">Title</option>
+        <option {% if order == '-movie__release_year' %} selected {% endif %} value="-movie__release_year">Year</option>
+        <option {% if order == '-movie__rate' %} selected {% endif %} value="-movie__rate">Rate</option>
+        <option {% if order == '-file_size' %} selected {% endif %} value="-file_size">Size</option>
+        <option {% if order == 'duration' %} selected {% endif %}value="duration">Duration</option>
+        <option {% if order == '-file_added' %} selected {% endif %}value="-file_added">Added Date</option>
       </select>
     </div>
   </div>

@@ -2,7 +2,7 @@
 {% load static %}
 {% load mytags %}
 
-{% block title %} - DLNA Tools{% endblock %}
+{% block title %}DLNA Tools{% endblock %}
 
 
 
@@ -78,7 +78,7 @@ function getFormData(data) {
 
 </script>
 {% endblock %}
-<h2 class="center">DLNA Tools</h2>
+<h2 class="header-color">DLNA Tools</h2>
 <p>
 <h4>Discover DLNA devices in network environment :</h4>
 <form class="form-inline my-2 my-lg-0" method="GET"  id="discover">
@@ -90,7 +90,7 @@ function getFormData(data) {
         <option value="mediaservers">Media servers</option>
     </select>
     <label>Timeout &nbsp; </label>
-    <input class="form-control mr-sm-2" type="int" name="timeout" value="2" placeholder="Nom ...">
+    <input class="form-control col-sm-1" type="number" name="timeout" value="2">
     <label>Verbosity &nbsp; </label>
     <select class="form-control mr-sm-2"  name="verbosity" value="0">
         <option value="0" selected>0</option>

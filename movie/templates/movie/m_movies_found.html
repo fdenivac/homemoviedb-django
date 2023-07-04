@@ -1,0 +1,49 @@
+{% extends 'movie/base.html' %}
+{% load static %}
+{% load mytags %}
+
+{% block title %}Movies{% endblock %}
+
+
+{% block content %}
+
+<style>
+    body {
+        min-width:1200px;
+        width: auto;            /* Firefox will set width as auto */
+    }
+</style>
+
+
+    <h2 class="header-color">{{ table_type }}</h2>
+    <div id="movies">
+    {% comment %} Movies (class Movie) table include file {% endcomment %}
+    <table id="movietable"  
+        data-toggle="table"
+        data-sortable="true"
+        class="table table-hover table-sm">
+        <thead class="thead-dark">
+            <tr>
+                {% if not 'poster' in hidden_fields %}  <th data-field="poster" data-align="center" data-width="70px">Poster</th> {% endif %}
+                <th data-field="title" data-sortable="true">Title</th>
+                <th data-field="year" data-sortable="true" data-width="4">Year</th>
+                <th data-field="overview" data-width="50" data-width-unit="%">Synopsys</th> 
+            </tr>
+        </thead>
+        {% for movie in movies %}
+        <tr>
+            {% if not 'poster' in hidden_fields %} <td> <a data-fancybox href="{{ movie.poster.all.0.poster.url }}"><img src="{{ movie.poster.all.0.poster.url }}" width="68px"></a> </td> {% endif %}
+            <td class="cell-text"> <a href="{% url 'mmovie_details' movie.id %}">{{ movie.title }}</a> </td>
+            <td> {{ movie.release_year }}</td>
+            <td class="cell-text"> {{ movie.overview }} </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+
+    </div>
+    {% include "movie/inc_pagination.html" %}
+    
+{% endblock %}
+
+

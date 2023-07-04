@@ -2,12 +2,13 @@
 {% load static %}
 {% load mytags %}
 
-{% block title %} - All Movies{% endblock %}
+{% block title %}All Movies{% endblock %}
 
 
 {% block content %}
 
-    <h2>{{ table_type }}</h2>
+    <h2 class="header-color"> {{ table_type }}</h2>
+    
     {% include "movie/inc_tablemovies.html" %}
 
     {% include "movie/inc_pagination.html" %}

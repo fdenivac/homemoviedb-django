@@ -7,9 +7,22 @@
 
 """
 
+import os
 from xml.dom import minidom
 import upnpclient
 import requests
+
+# map file extension to mime type
+EXTENSION_MIME = {
+    ".mp4": "video/mp4",
+    ".m4v": "video/mp4",
+    ".mkv" : "video/x-matroska",
+    ".avi": "video/x-msvideo",
+    ".mov": "video/quicktime",
+    ".mpg": "video/mpeg",
+    ".mpeg": "video/mpeg",
+
+}
 
 
 def _XMLGetNodeText(node):
@@ -107,39 +120,33 @@ class DLNA:
 
     def show_service(self, service, verbosity):
         """Show information on services on server"""
-        print(
-            "    type: '{}'  id: '{}'".format(service.service_type, service.service_id)
-        )
+        print(f"    type: '{service.service_type}'  id: '{service.service_id}'")
         if verbosity < 2:
             return
         for action in service.actions:
-            print("      action '%s'" % (action.name))
+            print(f"      action '{action.name}'")
             if verbosity < 3:
                 continue
             for arg_name, arg_def in action.argsdef_in:
                 valid = ", ".join(arg_def["allowed_values"]) or "*"
-                print(
-                    "         in: %s (%s): %s" % (arg_name, arg_def["datatype"], valid)
-                )
+                print(f'         in: {arg_name} ({arg_def["datatype"]}): {valid}')
             for arg_name, arg_def in action.argsdef_out:
                 valid = ", ".join(arg_def["allowed_values"]) or "*"
-                print(
-                    "        out: %s (%s): %s" % (arg_name, arg_def["datatype"], valid)
-                )
+                print(f'        out: {arg_name} ({arg_def["datatype"]}): {valid}')
 
     def show_device(self, verbosity=0):
         """Show device details and services"""
-        print("Device Friendly Name: %s" % self.device.friendly_name)
-        print("  model description: %s" % self.device.model_description)
-        print("  model name: %s" % self.device.model_name)
-        print("  location: %s" % self.device.location)
-        print("  device name: %s" % self.device.device_name)
-        print("  device type: %s" % self.device.device_type)
+        print(f"Device Friendly Name: {self.device.friendly_name}")
+        print(f"  model description: {self.device.model_description}")
+        print(f"  model name: {self.device.model_name}")
+        print(f"  location: {self.device.location}")
+        print(f"  device name: {self.device.device_name}")
+        print(f"  device type: {self.device.device_type}")
         if verbosity < 1:
             return
-        print("  manufacturer: %s" % self.device.manufacturer)
-        print("  model number: %s" % self.device.model_number)
-        print("  serial number: %s" % self.device.serial_number)
+        print(f"  manufacturer: {self.device.manufacturer}")
+        print(f"  model number: {self.device.model_number}")
+        print(f"  serial number: {self.device.serial_number}")
         print("  services availables:")
         for service in self.device.services:
             self.show_service(service, verbosity)
@@ -173,6 +180,8 @@ class DLNA:
     def search_directory(self, root_id, dirs):
         """search for directory from root"""
         if isinstance(dirs, str):
+            if dirs.startswith("/"):
+                dirs = dirs[1:]
             dirs = dirs.split("/")
         object_id = root_id
         if len(dirs) == 1 and dirs[0] == "":
@@ -258,7 +267,7 @@ class DLNA:
         meta = extract_metadata(node)
         return meta["id"]
 
-    def play_content(self, content_uri):
+    def play_content(self, movie, content_uri):
         """
         Play media content
             return tuple (Bool (done), str (reason))
@@ -269,12 +278,29 @@ class DLNA:
             self.device.AVTransport.Stop(InstanceID=0)
         except upnpclient.soap.SOAPError as _e:
             # ignore error (when not running ?)
-            print(_e)
             pass
         try:
+            _, ext = os.path.splitext(movie.file)
+            ext = ext.lower()
+            # build metadatas by device type
+            if self.device.manufacturer.lower().startswith("samsung"):
+                # ok without metadata
+                metadata = ""
+                # INFO: video station seems to use succesfully this :
+                #   metadata = '<DIDL-Lite xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/" xmlns:sec="http://www.sec.co.kr/" xmlns:dlna="urn:schemas-dlna-org:metadata-1-0/"><item id="302" parentID="@" restricted="1"><dc:title>The Extraordinary Journey of the Fakir.mkv</dc:title><upnp:class>object.item.videoItem</upnp:class><dc:date>2019-03-02T23:40:40</dc:date><res protocolInfo="http-get:*:video/x-matroska:DLNA.ORG_OP=01;DLNA.ORG_FLAGS=01700000000000000000000000000000" bitrate="235605" resolution="1280x536" size="1354729574" duration="1:35:50.000">http://192.168.1.23:5000/webman/3rdparty/VideoStation/controller/ui/cgi/vtestreaming.cgi/eyJpZCI6InVwbnA6dXVpZDoxZjA0YjUxMC04OTZhLTljOGQtMzBlYi0xYjcxYjM2N2Y5NWYiLCJtZXRob2QiOiJvcGVuIiwidG9rZW4iOiJEdXZ0eEVhbVlDNU5fMTY3ODQ0MjY2MiIsIngtbWt2IjoxfQo=.mkv</res></item></DIDL-Lite></CurrentURIMetaData>'
+            else:
+                mime = EXTENSION_MIME[ext] if ext in EXTENSION_MIME else "video/x"
+                metadata='<DIDL-Lite xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/"; xmlns:sec="http://www.sec.co.kr/" xmlns:dlna="urn:schemas-dlna-org:metadata-1-0/">'\
+                    f'<item id="{movie.id}" parentID="" restricted="1">'\
+                    f"<dc:title>{movie.movie.title}</dc:title>"\
+                    "<upnp:class>object.item.videoItem</upnp:class>"\
+                    f'<res protocolInfo="http-get:*:{mime}:DLNA.ORG_OP=01;DLNA.ORG_FLAGS=01700000000000000000000000000000" '\
+                        f'bitrate="{movie.bitrate}" resolution="{movie.screen_size}" size="{movie.file_size}" duration="{movie.duration_string()}">{content_uri}</res>'\
+                    "</item>"\
+                    "</DIDL-Lite>"
             # set content
             self.device.AVTransport.SetAVTransportURI(
-                InstanceID=0, CurrentURI=content_uri, CurrentURIMetaData=""
+                InstanceID=0, CurrentURI=content_uri, CurrentURIMetaData=metadata
             )
             # start playing
             self.device.AVTransport.Play(InstanceID=0, Speed="1")
@@ -307,4 +333,4 @@ def dlna_discover(discover, timeout, verbosity):
         ndevs += 1
         device = DLNA(device_instance=dev)
         device.show_device(verbosity=verbosity)
-    print("Devices listed : {} on {} found".format(ndevs, len(devices)))
+    print(f"Devices listed : {ndevs} on {len(devices)} found")

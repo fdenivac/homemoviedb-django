@@ -2,7 +2,7 @@
 {% load static %}
 {% load mytags %}
 
-{% block title %} - Movies by Genres{% endblock %}
+{% block title %}Movies by Genres{% endblock %}
 
 
 
@@ -56,7 +56,7 @@ $(document).ready(function() {
 </style>
 
 
-    <h2>{{ table_type }}</h2>
+    <h2 class="header-color"> {{ table_type }}</h2>
 
     <select id="dropgenres" class="form-control form-select-sm" size="12" style="max-width: 300px; display: block; margin:0 auto;">  
     {% for genrecount in genres %}
