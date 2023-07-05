@@ -22,7 +22,10 @@ from movie.authentication import NopassLoginView
 
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    # urls admin for django-admin-honeypot
+    path("admin/", include("admin_honeypot.urls", namespace="admin_honeypot")),
+    path("secretadmin/", admin.site.urls),
+    # include urls app movie
     path("", include("movie.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
