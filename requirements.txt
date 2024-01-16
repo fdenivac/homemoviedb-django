@@ -1,4 +1,4 @@
-Django==4.2.3
+Django==4.2.7
 django-admin-honeypot @ git+https://github.com/dmpayton/django-admin-honeypot
 django-axes==5.40.1
 django-glrm==1.1.3
